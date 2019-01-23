@@ -1,6 +1,7 @@
 ﻿USE SADENADB
 GO
 
+
 IF EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TMSINAC') AND SysStat & 0xf = 3)
 BEGIN
 	DROP TABLE SDB.TMSINAC
@@ -23,7 +24,8 @@ BEGIN
 	fc_curp_m varchar(20) NOT NULL,
 	fi_ent_nacm int NOT NULL,
 	fi_mpo_nacm int NOT NULL,
-	fd_fech_nac varchar(10) NOT NULL,
+	fd_fech_nac varchar(30) NOT NULL,
+	fd_hora_nac varchar(5) NOT NULL,
 	fi_edad_m int NOT NULL,
 	fi_edocivil int NOT NULL,
 	fc_calle_res varchar(80) NOT NULL,
@@ -42,11 +44,68 @@ BEGIN
 	fi_hijo_ante int NOT NULL,
 	fi_vive_aun int NOT NULL,
 	fi_niv_escol int NOT NULL,
-	fc_ocup_hab varchar(60) NOT NULL
+	fc_ocup_hab varchar(60) NOT NULL,
+	fi_sexo int NOT NULL
 	); 
 END
-GO  
+GO 
 
+
+IF EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TASINAC') AND SysStat & 0xf = 3)
+BEGIN
+	DROP TABLE SDB.TASINAC
+	--TRUNCATE TABLE SDB.TASINAC
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de la tabla SINAC
+--- Aplicacion:  SADENADB  
+----select * from SDB.TASINAC
+----------------------------------------------------------------------------------------------------------------------------------   
+IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TASINAC') AND SysStat & 0xf = 3)
+BEGIN
+	CREATE TABLE SDB.TASINAC
+	( 
+	fc_folio_certificado varchar(20) NOT NULL,
+	fc_folio_simple_certificado varchar(20) NOT NULL,
+	fi_control_id int NOT NULL,
+	fi_ma_edad int NOT NULL,
+	fi_ma_edo_civil_id int NOT NULL,	
+	fc_ma_dom_calle varchar(80) NOT NULL,
+	fc_ma_dom_numext varchar(20),
+	fc_ma_dom_numint varchar(20),
+	fi_ma_dom_edo_id int NOT NULL,
+	fi_ma_dom_mpio_id int NOT NULL,
+	fi_ma_dom_loc_id int NOT NULL,
+	fi_ma_num_nacimiento int NOT NULL,
+	fi_ma_escol_id int NOT NULL,
+	fc_ma_ocupacion varchar(60) NOT NULL,
+	fd_rn_fecha_hora_nacimiento datetime,
+	fi_rn_sexo_id int,
+	fi_rn_edo_id int,
+	fi_rn_mpio_id int
+	); 
+END
+GO 
+
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un índice para la tabla TASINAC  
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+IF NOT EXISTS (SELECT name FROM sys.indexes  WITH(NOLOCK)  WHERE NAME = 'IN001TASINAC')
+BEGIN
+	CREATE NONCLUSTERED INDEX IN001TASINAC ON SDB.TASINAC (fc_folio_simple_certificado DESC); 
+END
+GO
+IF NOT EXISTS (SELECT name FROM sys.indexes  WITH(NOLOCK)  WHERE NAME = 'IN002TASINAC')
+BEGIN
+	CREATE NONCLUSTERED INDEX IN002TASINAC ON SDB.TASINAC (fd_rn_fecha_hora_nacimiento DESC); 
+END
+GO
 
 IF EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TMSIC') AND SysStat & 0xf = 3)
 BEGIN
@@ -77,10 +136,50 @@ BEGIN
 	fc_desc_estado varchar(60),
 	fi_pais int,
 	fc_desc_pais varchar(60),
-	fc_no_certif varchar(30)
+	fc_no_certif varchar(30),
 	); 
 END
 GO 
+
+IF EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TASIC') AND SysStat & 0xf = 3)
+BEGIN
+	DROP TABLE SDB.TASIC
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de la tabla SINAC
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------   
+IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TASIC') AND SysStat & 0xf = 3)
+BEGIN
+	CREATE TABLE SDB.TASIC
+	(
+	fc_identificador varchar(60) NOT NULL,	
+	fc_folio_certificado varchar(20),
+	fc_folio_simple_certificado varchar(20) NOT NULL,
+	fi_control_id int NOT NULL,
+	fi_edo_id int,
+	fi_mpio_id int,
+	fd_rn_fecha_hora_nacimiento datetime,
+	fd_rn_fecha_registro datetime,
+	fi_estatus_duplicado int
+	); 
+END
+GO 
+
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un índice para la tabla TASINAC  
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+IF NOT EXISTS (SELECT name FROM sys.indexes  WITH(NOLOCK)  WHERE NAME = 'IN001TASIC')
+BEGIN
+	CREATE NONCLUSTERED INDEX IN001TASIC ON SDB.TASIC (fc_folio_simple_certificado DESC); 
+END
+GO
 
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  

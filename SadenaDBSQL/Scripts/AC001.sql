@@ -47,6 +47,7 @@ BEGIN TRY
 		INSERT INTO SDB.CTEstatusRegistro(fi_estatus_registro_id,fi_estatus_registro_desc) VALUES(01,'SUBREGISTRO')
 		INSERT INTO SDB.CTEstatusRegistro(fi_estatus_registro_id,fi_estatus_registro_desc) VALUES(02,'REGISTRO OPORTUNO')
 		INSERT INTO SDB.CTEstatusRegistro(fi_estatus_registro_id,fi_estatus_registro_desc) VALUES(03,'REGISTRO EXTEMPORANEO')
+		INSERT INTO SDB.CTEstatusRegistro(fi_estatus_registro_id,fi_estatus_registro_desc) VALUES(04,'SIC DUPLICADO')
 	END
 
 
