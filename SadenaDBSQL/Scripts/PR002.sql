@@ -99,6 +99,66 @@ ERROR:
  GO
 
 
+IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSConsultaMesesXAnio') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRSConsultaMesesXAnio
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que obtiene los meses de un año
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRSConsultaMesesXAnio(
+@pc_ano VARCHAR(4),
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 	
+	DECLARE 
+	@StartDate  DATETIME,
+	@EndDate    DATETIME
+
+	SET NOCOUNT ON
+		
+BEGIN TRY	
+
+	SET LANGUAGE Spanish
+	SET @StartDate = CAST(@pc_ano + CAST('01' AS varchar) + CAST('01' AS varchar) AS DATETIME)
+
+	IF(@pc_ano = FORMAT(SYSDATETIME(),'yyyy'))
+		BEGIN
+			SET @EndDate   = CAST(@pc_ano + FORMAT(SYSDATETIME(),'MM') + FORMAT(SYSDATETIME(),'dd') AS DATETIME)
+		END 
+	ELSE
+		BEGIN
+			SET @EndDate   = CAST(@pc_ano + CAST('12' AS varchar) + CAST('31' AS varchar) AS DATETIME)
+		END
+
+	SELECT  MONTH(DATEADD(MONTH, x.number, @StartDate)) AS MesId,DATENAME(MONTH, DATEADD(MONTH, x.number, @StartDate)) AS MesDesc
+	FROM    master.dbo.spt_values x
+	WHERE   x.type = 'P'        
+	AND     x.number <= DATEDIFF(MONTH, @StartDate, @EndDate);
+
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'
+		
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener la consulta de los mesesde un año' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
+
+
 IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRNSubregistroTotalNacimientos') AND SysStat & 0xf = 4)
 BEGIN
 	DROP PROC SDB.PRNSubregistroTotalNacimientos
@@ -325,9 +385,9 @@ ERROR:
 	RETURN -1      
  GO
 
- IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRNSubregistroNacimientosPorConsulta') AND SysStat & 0xf = 4)
+IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSSubregistroNacimientos') AND SysStat & 0xf = 4)
 BEGIN
-	DROP PROC SDB.PRNSubregistroNacimientosPorConsulta
+	DROP PROC SDB.PRSSubregistroNacimientos
 END
 GO
 ----------------------------------------------------------------------------------------------------------------------------------      
@@ -336,7 +396,7 @@ GO
 --- Descripcion: Creación de un stored procedure que obtiene el subregistro de los nacimientos a través de parámetros de búsqueda
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
-CREATE PROCEDURE SDB.PRNSubregistroNacimientosPorConsulta(
+CREATE PROCEDURE SDB.PRSSubregistroNacimientos(
 @pc_anos VARCHAR(255),
 @pc_meses VARCHAR(255),
 @pc_municipios VARCHAR(255),
@@ -557,4 +617,20 @@ ERROR:
 	SET NOCOUNT OFF        
 	RETURN -1      
  GO
+
+IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSTotalesSubregistroNacimientos') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRSTotalesSubregistroNacimientos
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que obtiene los totales el subregistro de los nacimientos a través de parámetros de búsqueda
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+
+
+
+
 
