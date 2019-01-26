@@ -175,6 +175,58 @@ BEGIN TRY
 		
 	END
 
+	IF EXISTS( SELECT fi_mpio_id FROM SDB.CTMunicipio WITH( NOLOCK ))
+	BEGIN
+		DELETE FROM SDB.CTMunicipio
+	END
+	----------------------------------------------------------------------------------------------------------------------------------      
+	--- Responsable: Jorge Alberto de la Rosa  
+	--- Fecha      : Diciembre 2018  
+	--- Descripcion: Creación de registros del catálogo de municipios
+	--- Aplicacion:  SADENADB  
+	----------------------------------------------------------------------------------------------------------------------------------  
+	IF NOT EXISTS(SELECT fi_mpio_id FROM SDB.CTMunicipio WITH( NOLOCK ))
+	BEGIN
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(1,'Abasolo','27.1822222222222','-101.425277777777')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(2,'Acuña','29.470833','-102.280277')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(3,'Allende','28.3416666666666','-100.833888888888')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(4,'Arteaga','25.4327777777777','-100.846667')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(5,'Candela','26.8402777777777','-100.661944444444')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(6,'Castaños','26.7841666666666','-101.432777777777')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(7,'Cuatro Ciénegas','26.9861111111111','-102.066388888888')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(8,'Escobedo','27.235','-101.412222222222')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(9,'Francisco I. Madero','25.7752777777777','-103.273055555555')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(10,'Frontera','26.9266666666666','-101.4525')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(11,'General Cepeda','25.3780555555555','-101.475')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(12,'Guerrero','28.3088888888888','-100.378333333333')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(13,'Hidalgo','27.7888888888888','-99.8755555555555')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(14,'Jiménez','29.0697222222222','-100.674722222222')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(15,'Juárez','27.6069444444444','-100.726111111111')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(16,'Lamadrid','27.0497222222222','-101.794722222222')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(17,'Matamoros','25.5280555555555','-103.228333333333')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(18,'Monclova','26.9102777777777','-101.422222222222')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(19,'Morelos','28.4077777777777','-100.885')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(20,'Múzquiz','27.8786111111111','-101.517222222222')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(21,'Nadadores','27.016667','-101.593611111111')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(22,'Nava','28.4208333333333','-100.768611111111')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(23,'Ocampo','27.3138888888888','-102.396388888888')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(24,'Parras','25.4408333333333','-102.186111111111')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(25,'Piedras Negras','28.7222222222222','-100.568055555555')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(26,'Progreso','27.4283333333333','-100.987222222222')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(27,'Ramos Arizpe','25.5405555555555','-100.950555555555')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(28,'Sabinas','27.8527777777777','-101.119722222222')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(29,'Sacramento','27.0036111111111','-101.724722222222')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(30,'Saltillo','25.3997222222222','-101')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(31,'San Buenaventura','27.0625','-101.546666666666')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(32,'San Juan de Sabinas','27.9291666666666','-101.303333333333')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(33,'San Pedro','25.7588888888888','-102.982777777777')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(34,'Sierra Mojada','26.904444','-103.296667')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(35,'Torreón','25.5444444444444','-103.4425')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(36,'Viesca','25.3411111111111','-102.804444444444')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(37,'Villa Unión','28.2202777777777','-100.724444444444')
+		INSERT INTO SDB.CTMunicipio (fi_mpio_id,fc_mpio_desc,fc_latitud,fc_longitud) VALUES(38,'Zaragoza','28.4752777777777','-100.919444444444')
+	END
+
 
 END TRY
 BEGIN CATCH

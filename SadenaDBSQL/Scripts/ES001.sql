@@ -197,7 +197,10 @@ BEGIN
 	CREATE TABLE SDB.CTMunicipio 
 	( 
 	fi_mpio_id int NOT NULL,
-	fc_mpio_desc varchar(30) NOT NULL	
+	fc_mpio_desc varchar(30) NOT NULL,
+	fc_latitud varchar(20) NOT NULL,
+	fc_longitud varchar(20) NOT NULL,
+	fc_poligono geometry null
 	); 
 END
 GO 
