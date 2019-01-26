@@ -53,29 +53,15 @@ BEGIN TRY
 		SELECT fc_ano as AnoCarga FROM @vtAnos
 
 		SET LANGUAGE Spanish
-		SELECT DISTINCT(DATENAME(MONTH, SINAC.fd_rn_fecha_hora_nacimiento)) AS MesCarga 
-		FROM SDB.TASINAC SINAC,@vtAnos VT
-		WHERE VT.fc_ano = YEAR(SINAC.fd_rn_fecha_hora_nacimiento) 
+	
+		SELECT  DATENAME(MONTH, DATEADD(MONTH, x.number, '20000101')) AS MesCarga
+		FROM    master.dbo.spt_values x
+		WHERE   x.type = 'P'        
+		AND     x.number <= DATEDIFF(MONTH, '20000101', '20001231'); 
 
-		--SELECT DISTINCT(SINAC.fi_rn_mpio_id) as MpioId,CTLOC.fc_loc_mpio_desc as MpioDesc
-		--FROM @vtAnos VT INNER JOIN SDB.TASINAC SINAC 
-		--ON VT.fc_ano = YEAR(SINAC.fd_rn_fecha_hora_nacimiento)
-		--INNER JOIN SDB.CTLocalidad CTLOC
-		--ON SINAC.fi_rn_edo_id = CTLOC.fi_loc_edo_id		
-		--AND SINAC.fi_rn_mpio_id = CTLOC.fi_loc_mpio_id		
-		--WHERE 
-		--CTLOC.fi_loc_edo_id = @CONST_COAHUILA_EDO_ID
-		--ORDER BY fc_loc_mpio_desc
-
-		SELECT DISTINCT(SINAC.fi_rn_mpio_id) as MpioId,CTLOC.fc_loc_mpio_desc as MpioDesc
-		FROM SDB.TASINAC SINAC 
-		INNER JOIN SDB.CTLocalidad CTLOC
-		ON SINAC.fi_rn_edo_id = CTLOC.fi_loc_edo_id		
-		AND SINAC.fi_rn_mpio_id = CTLOC.fi_loc_mpio_id		
-		WHERE 
-		CTLOC.fi_loc_edo_id = @CONST_COAHUILA_EDO_ID
-		ORDER BY fc_loc_mpio_desc
-
+		SELECT fi_mpio_id as MpioId,fc_mpio_desc as MpioDesc
+		FROM SDB.CTMunicipio
+		
 	END
 	ELSE
 		BEGIN
