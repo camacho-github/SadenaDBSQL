@@ -27,3 +27,36 @@ END
 RETURN ISNULL(@strAlphaNumeric,0)
 END
 GO
+
+IF  EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('sdb.FNConvierteCadenaEnTablaEnteros'))
+	DROP FUNCTION sdb.FNConvierteCadenaEnTablaEnteros
+GO 
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de una función para convertir una cadena divida por comas a una tabla
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE FUNCTION sdb.FNConvierteCadenaEnTablaEnteros (@lista VARCHAR(MAX))
+   RETURNS @tbl TABLE (numero int NOT NULL) AS
+BEGIN
+   DECLARE @pos        int,
+           @siguientepos    int,
+           @largo   int
+
+   SELECT @pos = 0, @siguientepos = 1
+
+   IF(@lista IS NOT NULL)
+	   WHILE @siguientepos > 0
+	   BEGIN
+		  SELECT @siguientepos = charindex(',', @lista, @pos + 1)
+		  SELECT @largo = CASE WHEN @siguientepos > 0
+								  THEN @siguientepos
+								  ELSE len(@lista) + 1
+							 END - @pos - 1
+		  INSERT @tbl (numero)
+			 VALUES (convert(int, substring(@lista, @pos + 1, @largo)))
+		  SELECT @pos = @siguientepos
+	   END
+   RETURN
+END
