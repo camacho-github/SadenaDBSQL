@@ -153,7 +153,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creación de un stored procedure que los totales del subregistro de los nacimientos
+--- Descripcion: Creación de un stored procedure que obtiene los totales del subregistro de los nacimientos
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRSTotalesSubregistroNacimientos(
@@ -164,87 +164,16 @@ CREATE PROCEDURE SDB.PRSTotalesSubregistroNacimientos(
 @po_msg	VARCHAR(255) OUTPUT)
 
 AS 	
-	DECLARE @vtRegistros TABLE(
-	fi_id_renglon   INT NOT NULL IDENTITY(1,1),
-	fc_folio_simple_certificado varchar(20) NOT NULL,
-	fd_rn_fecha_hora_nacimiento datetime,	
-	fi_rn_edo_id int,
-	fi_rn_mpio_id int,
-	fc_folio_simple_certificado_sic varchar(20),
-	fd_rn_fecha_hora_nacimiento_sic datetime,
-	fd_rn_fecha_registro_sic datetime, 
-	fi_edo_id_sic int,
-	fi_mpio_id_sic int,
-	fi_estatus_registro_id int NOT NULL,
-	fi_estatus_duplicado_sic int NOT NULL
-	)
-
-	DECLARE 
-	@CONST_SUBREGISTRO_ID INT = 1,
-	@CONST_OPORTUNO_ID INT = 2,
-	@CONST_EXTEMPORANEO_ID INT = 3,
-	@CONST_DUPLICADO_ID INT = 4,
-	@CONST_COAHUILA_EDO_ID INT = 5
 	
 	SET NOCOUNT ON
 
 BEGIN TRY		
-	-- Inserta todos los registros del sinac, sin subregistro
-	
-	INSERT @vtRegistros(
-	fc_folio_simple_certificado,
-	fd_rn_fecha_hora_nacimiento,	
-	fi_rn_edo_id,
-	fi_rn_mpio_id,
-	fc_folio_simple_certificado_sic,
-	fd_rn_fecha_hora_nacimiento_sic,
-	fd_rn_fecha_registro_sic, 
-	fi_edo_id_sic,
-	fi_mpio_id_sic,
-	fi_estatus_registro_id,
-	fi_estatus_duplicado_sic)
-	SELECT 
-	sinac.fc_folio_simple_certificado,
-	sinac.fd_rn_fecha_hora_nacimiento,		
-	sinac.fi_rn_edo_id,
-	sinac.fi_rn_mpio_id,	
-	sic.fc_folio_simple_certificado,
-	sic.fd_rn_fecha_hora_nacimiento,
-	sic.fd_rn_fecha_registro, 
-	sic.fi_edo_id,
-	sic.fi_mpio_id,	
-	@CONST_SUBREGISTRO_ID,
-	ISNULL(sic.fi_estatus_duplicado, 0)
-	FROM sdb.tasinac sinac
-	LEFT JOIN SDB.tasic sic
-	ON sinac.fc_folio_simple_certificado = sic.fc_folio_simple_certificado
-	and len(sinac.fc_folio_simple_certificado) > 1
-	WHERE @pc_anos IS NULL OR (@pc_anos IS NOT NULL AND YEAR(sinac.fd_rn_fecha_hora_nacimiento) IN (SELECT A.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_anos) A))
-	AND @pc_meses IS NULL OR (@pc_meses IS NOT NULL AND MONTH(sinac.fd_rn_fecha_hora_nacimiento) IN (SELECT M.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_meses) M))
-	AND @pc_municipios IS NULL OR (sinac.fi_rn_edo_id = @CONST_COAHUILA_EDO_ID AND SINAC.fi_rn_mpio_id IN(SELECT Mun.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_municipios) Mun))
-		
-	UPDATE @vtRegistros
-	SET fi_estatus_registro_id = @CONST_DUPLICADO_ID
-	WHERE fc_folio_simple_certificado = fc_folio_simple_certificado_sic
-	AND fi_estatus_duplicado_sic = 1	
-		
-	UPDATE @vtRegistros
-	SET fi_estatus_registro_id = @CONST_OPORTUNO_ID
-	WHERE fc_folio_simple_certificado = fc_folio_simple_certificado_sic
-	AND fi_estatus_registro_id = 1
-	AND fd_rn_fecha_registro_sic <= DATEADD(day,+60,fd_rn_fecha_hora_nacimiento)
 
-	UPDATE @vtRegistros
-	SET fi_estatus_registro_id = @CONST_EXTEMPORANEO_ID
-	WHERE fd_rn_fecha_hora_nacimiento = fd_rn_fecha_hora_nacimiento_sic
-	AND fi_rn_edo_id = fi_edo_id_sic and fi_rn_mpio_id = fi_mpio_id_sic
-	AND fi_estatus_registro_id = 1
-	AND fd_rn_fecha_registro_sic > DATEADD(day,+60,fd_rn_fecha_hora_nacimiento)	
-	
 	SELECT 'Totales Subregistro', vt.fi_estatus_registro_id as IdGrupo, ct.fi_estatus_registro_desc as NombreGrupo,count(vt.fi_estatus_registro_id) as Total
-	FROM @vtRegistros vt INNER JOIN SDB.CTEstatusRegistro ct
+	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt INNER JOIN SDB.CTEstatusRegistro ct
 	ON vt.fi_estatus_registro_id = ct.fi_estatus_registro_id
 	GROUP BY vt.fi_estatus_registro_id,ct.fi_estatus_registro_desc
+	
 	
 	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
 
@@ -263,8 +192,7 @@ ERROR:
 	RETURN -1      
  GO
 
-
-IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSSubregistroNacimientos') AND SysStat & 0xf = 4)
+ IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSSubregistroNacimientos') AND SysStat & 0xf = 4)
 BEGIN
 	DROP PROC SDB.PRSSubregistroNacimientos
 END
@@ -322,6 +250,7 @@ AS
 
 BEGIN TRY		
 	-- Inserta todos los registros del sinac, sin subregistro
+	
 	INSERT @vtRegistros(
 	fc_folio_certificado,
 	fc_folio_simple_certificado,
@@ -348,56 +277,32 @@ BEGIN TRY
 	fi_estatus_registro_id,
 	fi_estatus_duplicado_sic)
 	SELECT 
-	sinac.fc_folio_certificado,
-	sinac.fc_folio_simple_certificado,
-	sinac.fd_rn_fecha_hora_nacimiento,	
-	sinac.fi_rn_sexo_id,
-	sinac.fi_rn_edo_id,
-	sinac.fi_rn_mpio_id,
-	sinac.fi_ma_dom_edo_id,
-	sinac.fi_ma_dom_mpio_id,
-	sinac.fi_ma_dom_loc_id,
-	sinac.fc_ma_dom_calle,
-	sinac.fc_ma_dom_numext,
-	sinac.fc_ma_dom_numint,		
-	sinac.fi_ma_edad,
-	sinac.fi_ma_num_nacimiento,
-	sinac.fc_ma_ocupacion,
-	sinac.fi_ma_edo_civil_id,
-	sinac.fi_ma_escol_id,
-	sic.fc_folio_simple_certificado,
-	sic.fd_rn_fecha_hora_nacimiento,
-	sic.fd_rn_fecha_registro, 
-	sic.fi_edo_id,
-	sic.fi_mpio_id,	
-	@CONST_SUBREGISTRO_ID,
-	ISNULL(sic.fi_estatus_duplicado, 0)
-	FROM sdb.tasinac sinac
-	LEFT JOIN SDB.tasic sic
-	ON sinac.fc_folio_simple_certificado = sic.fc_folio_simple_certificado
-	and len(sinac.fc_folio_simple_certificado) > 1
-	WHERE @pc_anos IS NULL OR (@pc_anos IS NOT NULL AND YEAR(sinac.fd_rn_fecha_hora_nacimiento) IN (SELECT A.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_anos) A))
-	AND @pc_meses IS NULL OR (@pc_meses IS NOT NULL AND MONTH(sinac.fd_rn_fecha_hora_nacimiento) IN (SELECT M.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_meses) M))
-	AND @pc_municipios IS NULL OR (@pc_municipios IS NOT NULL AND sinac.fi_rn_edo_id = @CONST_COAHUILA_EDO_ID AND SINAC.fi_rn_mpio_id IN(SELECT Mun.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_municipios) Mun))
+	VT.fc_folio_certificado,
+	VT.fc_folio_simple_certificado,
+	VT.fd_rn_fecha_hora_nacimiento,	
+	VT.fi_rn_sexo_id,
+	VT.fi_rn_edo_id,
+	VT.fi_rn_mpio_id,
+	VT.fi_ma_dom_edo_id,
+	VT.fi_ma_dom_mpio_id,
+	VT.fi_ma_dom_loc_id,
+	VT.fc_ma_dom_calle,
+	VT.fc_ma_dom_numext,
+	VT.fc_ma_dom_numint,		
+	VT.fi_ma_edad,
+	VT.fi_ma_num_nacimiento,
+	VT.fc_ma_ocupacion,
+	VT.fi_ma_edo_civil_id,
+	VT.fi_ma_escol_id,
+	VT.fc_folio_simple_certificado_sic,
+	VT.fd_rn_fecha_hora_nacimiento_sic,
+	VT.fd_rn_fecha_registro_sic, 
+	VT.fi_edo_id_sic,
+	VT.fi_mpio_id_sic,
+	VT.fi_estatus_registro_id,
+	VT.fi_estatus_duplicado_sic
+	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) VT
 		
-	UPDATE @vtRegistros
-	SET fi_estatus_registro_id = @CONST_DUPLICADO_ID
-	WHERE fc_folio_simple_certificado = fc_folio_simple_certificado_sic
-	AND fi_estatus_duplicado_sic = 1	
-		
-	UPDATE @vtRegistros
-	SET fi_estatus_registro_id = @CONST_OPORTUNO_ID
-	WHERE fc_folio_simple_certificado = fc_folio_simple_certificado_sic
-	AND fi_estatus_registro_id = 1
-	AND fd_rn_fecha_registro_sic <= DATEADD(day,+60,fd_rn_fecha_hora_nacimiento)
-
-	UPDATE @vtRegistros
-	SET fi_estatus_registro_id = @CONST_EXTEMPORANEO_ID
-	WHERE fd_rn_fecha_hora_nacimiento = fd_rn_fecha_hora_nacimiento_sic
-	AND fi_rn_edo_id = fi_edo_id_sic and fi_rn_mpio_id = fi_mpio_id_sic
-	AND fi_estatus_registro_id = 1
-	AND fd_rn_fecha_registro_sic > DATEADD(day,+60,fd_rn_fecha_hora_nacimiento)	
-	
 	SELECT 'Totales Subregistro', ct.fi_estatus_registro_desc as NombreGrupo,count(vt.fi_estatus_registro_id) as Total
 	FROM @vtRegistros vt INNER JOIN SDB.CTEstatusRegistro ct
 	ON vt.fi_estatus_registro_id = ct.fi_estatus_registro_id
@@ -498,5 +403,408 @@ ERROR:
  GO
 
 
+IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSReporteSubregistroMunicipios') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRSReporteSubregistroMunicipios
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que obtiene el reporte por municipios
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRSReporteSubregistroMunicipios(
+@pc_anos VARCHAR(255),
+@pc_meses VARCHAR(255),
+@pc_municipios VARCHAR(255),
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 			
+	DECLARE 
+	@CONST_COAHUILA_EDO_ID INT = 5
+	
+	SET NOCOUNT ON
+
+BEGIN TRY		
+
+	SELECT  IdMun,Municipio,[1] as TotalSubregistro,[2] as TotalOportuno,[3]  as TotalExtemporaneo
+	FROM    (	
+	SELECT vt.fi_rn_mpio_id As IdMun,ctM.fc_mpio_desc AS Municipio, vt.fi_estatus_registro_id as IdGrupo,count(vt.fi_estatus_registro_id) as Total
+	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
+	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id	
+	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_estatus_registro_id
+	)s
+	PIVOT   (SUM(Total) FOR IdGrupo IN ([1] ,[2], [3])) pvt	
+	
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener subregistro ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
 
 
+ IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSReporteEdadSubregistroMunicipios') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRSReporteEdadSubregistroMunicipios
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que obtiene el reporte por edades de los nacimientos a través de parámetros de búsqueda
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRSReporteEdadSubregistroMunicipios(
+@pc_anos VARCHAR(255),
+@pc_meses VARCHAR(255),
+@pc_municipios VARCHAR(400),
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 	
+	
+	DECLARE 
+	@CONST_SUBREGISTRO_ID INT = 1,
+	@CONST_OPORTUNO_ID INT = 2,
+	@CONST_EXTEMPORANEO_ID INT = 3,
+	@CONST_DUPLICADO_ID INT = 4,
+	@CONST_COAHUILA_EDO_ID INT = 5
+			
+	SET NOCOUNT ON
+
+BEGIN TRY		
+		
+	DECLARE @columns NVARCHAR(MAX), @sql NVARCHAR(MAX);
+	SET @columns = N'';
+	SELECT @columns += N', p.' + QUOTENAME(fi_ma_edad)
+	  FROM (
+	  SELECT DISTINCT(fi_ma_edad) FROM sdb.tasinac
+	  WHERE 
+	  (@pc_anos IS NULL OR (@pc_anos IS NOT NULL AND YEAR(fd_rn_fecha_hora_nacimiento) IN (SELECT A.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_anos) A)))
+		AND (@pc_meses IS NULL OR (@pc_meses IS NOT NULL AND MONTH(fd_rn_fecha_hora_nacimiento) IN (SELECT M.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_meses) M)))
+		AND (@pc_municipios IS NULL OR (fi_rn_edo_id = @CONST_COAHUILA_EDO_ID AND fi_rn_mpio_id IN(SELECT Mun.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_municipios) Mun)))
+	  ) AS x order by fi_ma_edad asc;
+	SET @sql = N'
+	DECLARE 
+	@vc_anos VARCHAR(255),
+	@vc_meses VARCHAR(255),
+	@vc_municipios VARCHAR(400)
+	set @vc_anos =''' + @pc_anos + '''
+	set @vc_meses =''' + @pc_meses + '''
+	set @vc_municipios =''' + @pc_municipios + '''
+	SELECT IdMun,Municipio,' + STUFF(@columns, 1, 2, '') + '
+	FROM
+	(
+		SELECT vt.fi_rn_mpio_id As IdMun,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_edad AS Edad,count(vt.fi_ma_edad) as Total
+		FROM SDB.FNObtieneTablaSubregistro(@vc_anos,@vc_meses,@vc_municipios) vt 
+		INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id	
+		GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_edad
+	) AS j
+	PIVOT
+	(
+	  SUM(Total) FOR Edad IN ('
+	  + STUFF(REPLACE(@columns, ', p.[', ',['), 1, 1, '')
+	  + ')
+	) AS p;';
+	PRINT @sql;
+	EXEC sp_executesql @sql;
+
+
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener subregistro ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
+
+
+IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSReporteEscolaridadSubregistroMunicipios') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRSReporteEscolaridadSubregistroMunicipios
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que obtiene el reporte de escolaridad por municipios
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRSReporteEscolaridadSubregistroMunicipios(
+@pc_anos VARCHAR(255),
+@pc_meses VARCHAR(255),
+@pc_municipios VARCHAR(255),
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 			
+	DECLARE 
+	@CONST_COAHUILA_EDO_ID INT = 5
+	
+	SET NOCOUNT ON
+	
+BEGIN TRY		
+	SELECT fi_escol_id,fc_escol_desc FROM sdb.CTEscolaridad
+		
+	DECLARE @columns NVARCHAR(MAX), @sql NVARCHAR(MAX);
+	SET @columns = N'';
+	SELECT @columns += N', p.' + QUOTENAME(fi_ma_escol_id)
+	  FROM (
+	  SELECT DISTINCT(fi_ma_escol_id) FROM sdb.tasinac
+	  WHERE 
+	  (@pc_anos IS NULL OR (@pc_anos IS NOT NULL AND YEAR(fd_rn_fecha_hora_nacimiento) IN (SELECT A.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_anos) A)))
+		AND (@pc_meses IS NULL OR (@pc_meses IS NOT NULL AND MONTH(fd_rn_fecha_hora_nacimiento) IN (SELECT M.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_meses) M)))
+		AND (@pc_municipios IS NULL OR (fi_rn_edo_id = @CONST_COAHUILA_EDO_ID AND fi_rn_mpio_id IN(SELECT Mun.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_municipios) Mun)))
+	  ) AS x order by fi_ma_escol_id asc;
+	SET @sql = N'
+	DECLARE 
+	@vc_anos VARCHAR(255),
+	@vc_meses VARCHAR(255),
+	@vc_municipios VARCHAR(400)
+	set @vc_anos =''' + @pc_anos + '''
+	set @vc_meses =''' + @pc_meses + '''
+	set @vc_municipios =''' + @pc_municipios + '''
+	SELECT IdMun,Municipio,' + STUFF(@columns, 1, 2, '') + '
+	FROM
+	(
+		SELECT vt.fi_rn_mpio_id As IdMun,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_escol_id AS Escol,count(vt.fi_ma_escol_id) as Total
+		FROM SDB.FNObtieneTablaSubregistro(@vc_anos,@vc_meses,@vc_municipios) vt 
+		INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id	
+		GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_escol_id
+	) AS j
+	PIVOT
+	(
+	  SUM(Total) FOR Escol IN ('
+	  + STUFF(REPLACE(@columns, ', p.[', ',['), 1, 1, '')
+	  + ')
+	) AS p;';
+	PRINT @sql;
+	EXEC sp_executesql @sql;
+
+
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener subregistro ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
+
+ IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSReporteSexoSubregistroMunicipios') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRSReporteSexoSubregistroMunicipios
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que obtiene el reporte por municipios
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRSReporteSexoSubregistroMunicipios(
+@pc_anos VARCHAR(255),
+@pc_meses VARCHAR(255),
+@pc_municipios VARCHAR(255),
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 			
+	
+	SET NOCOUNT ON
+
+BEGIN TRY		
+	SELECT fi_sexo_id,fc_sexo_desc FROM sdb.ctsexo
+
+	SELECT  IdMun,Municipio,[1] as Hombre,[2] as Mujer,[3]  as 'Sin Información'
+	FROM    (	
+	SELECT vt.fi_rn_mpio_id As IdMun,ctM.fc_mpio_desc AS Municipio, vt.fi_rn_sexo_id as IdSexo,count(vt.fi_rn_sexo_id) as Total
+	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
+	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id	
+	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_rn_sexo_id
+	)s
+	PIVOT   (SUM(Total) FOR IdSexo IN ([1] ,[2], [3])) pvt	
+	
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener subregistro ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
+
+
+  IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSReporteEdoCivilSubregistroMunicipios') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRSReporteEdoCivilSubregistroMunicipios
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que obtiene el reporte por municipios
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRSReporteEdoCivilSubregistroMunicipios(
+@pc_anos VARCHAR(255),
+@pc_meses VARCHAR(255),
+@pc_municipios VARCHAR(255),
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 			
+	
+	SET NOCOUNT ON
+
+BEGIN TRY		
+	SELECT fi_edo_civil_id,fc_edo_civil_desc FROM SDB.CTEdoCivil
+
+	SELECT  IdMun,Municipio,[11] as CASADA,[12] as SOLTERA,[13] as DIVORCIADA,[14] as VIUDA,[15] as 'UNIÓN LIBRE',[16] as SEPARADA,[88] as 'N.E.',[99] as 'S.I.'
+	FROM    (	
+	SELECT vt.fi_rn_mpio_id As IdMun,ctM.fc_mpio_desc AS Municipio, vt.fi_ma_edo_civil_id as IdEdoCivil,count(vt.fi_ma_edo_civil_id) as Total
+	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
+	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id	
+	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_edo_civil_id
+	)s
+	PIVOT   (SUM(Total) FOR IdEdoCivil IN ([11] ,[12], [13], [14], [15], [16], [88], [99])) pvt	
+	
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener subregistro ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
+
+
+  IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSReporteNumNacSubregistroMunicipios') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRSReporteNumNacSubregistroMunicipios
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que obtiene el reporte por municipios
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRSReporteNumNacSubregistroMunicipios(
+@pc_anos VARCHAR(255),
+@pc_meses VARCHAR(255),
+@pc_municipios VARCHAR(400),
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 	
+	
+	DECLARE 
+	@CONST_SUBREGISTRO_ID INT = 1,
+	@CONST_OPORTUNO_ID INT = 2,
+	@CONST_EXTEMPORANEO_ID INT = 3,
+	@CONST_DUPLICADO_ID INT = 4,
+	@CONST_COAHUILA_EDO_ID INT = 5
+			
+	SET NOCOUNT ON
+
+BEGIN TRY		
+		
+	DECLARE @columns NVARCHAR(MAX), @sql NVARCHAR(MAX);
+	SET @columns = N'';
+	SELECT @columns += N', p.' + QUOTENAME(fi_ma_num_nacimiento)
+	  FROM (
+	  SELECT DISTINCT(fi_ma_num_nacimiento) FROM sdb.tasinac
+	  WHERE 
+	  (@pc_anos IS NULL OR (@pc_anos IS NOT NULL AND YEAR(fd_rn_fecha_hora_nacimiento) IN (SELECT A.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_anos) A)))
+		AND (@pc_meses IS NULL OR (@pc_meses IS NOT NULL AND MONTH(fd_rn_fecha_hora_nacimiento) IN (SELECT M.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_meses) M)))
+		AND (@pc_municipios IS NULL OR (fi_rn_edo_id = @CONST_COAHUILA_EDO_ID AND fi_rn_mpio_id IN(SELECT Mun.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_municipios) Mun)))
+	  ) AS x order by fi_ma_num_nacimiento asc;
+	SET @sql = N'
+	DECLARE 
+	@vc_anos VARCHAR(255),
+	@vc_meses VARCHAR(255),
+	@vc_municipios VARCHAR(400)
+	set @vc_anos =''' + @pc_anos + '''
+	set @vc_meses =''' + @pc_meses + '''
+	set @vc_municipios =''' + @pc_municipios + '''
+	SELECT IdMun,Municipio,' + STUFF(@columns, 1, 2, '') + '
+	FROM
+	(
+		SELECT vt.fi_rn_mpio_id As IdMun,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_num_nacimiento AS NumNac,count(vt.fi_ma_num_nacimiento) as Total
+		FROM SDB.FNObtieneTablaSubregistro(@vc_anos,@vc_meses,@vc_municipios) vt 
+		INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id	
+		GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_num_nacimiento
+	) AS j
+	PIVOT
+	(
+	  SUM(Total) FOR NumNac IN ('
+	  + STUFF(REPLACE(@columns, ', p.[', ',['), 1, 1, '')
+	  + ')
+	) AS p;';
+	PRINT @sql;
+	EXEC sp_executesql @sql;
+
+
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener subregistro ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
