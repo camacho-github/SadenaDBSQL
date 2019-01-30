@@ -429,7 +429,7 @@ AS
 
 BEGIN TRY		
 
-	SELECT  IdMun,Municipio,[1] as TotalSubregistro,[2] as TotalOportuno,[3]  as TotalExtemporaneo
+	SELECT  IdMun,Municipio,ISNULL([1],0) as TotalSubregistro,ISNULL([2],0) as TotalOportuno,ISNULL([3],0)  as TotalExtemporaneo
 	FROM    (	
 	SELECT vt.fi_rn_mpio_id As IdMun,ctM.fc_mpio_desc AS Municipio, vt.fi_estatus_registro_id as IdGrupo,count(vt.fi_estatus_registro_id) as Total
 	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
@@ -437,7 +437,7 @@ BEGIN TRY
 	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_estatus_registro_id
 	)s
 	PIVOT   (SUM(Total) FOR IdGrupo IN ([1] ,[2], [3])) pvt	
-	
+	FOR XML AUTO, Elements  
 	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
 
 END TRY
@@ -456,7 +456,7 @@ ERROR:
  GO
 
 
- IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSReporteEdadSubregistroMunicipios') AND SysStat & 0xf = 4)
+IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSReporteEdadSubregistroMunicipios') AND SysStat & 0xf = 4)
 BEGIN
 	DROP PROC SDB.PRSReporteEdadSubregistroMunicipios
 END
@@ -486,10 +486,11 @@ AS
 	SET NOCOUNT ON
 
 BEGIN TRY		
-		
-	DECLARE @columns NVARCHAR(MAX), @sql NVARCHAR(MAX);
-	SET @columns = N'';
-	SELECT @columns += N', p.' + QUOTENAME(fi_ma_edad)
+	DECLARE 
+	@colPivote NVARCHAR(MAX),@colNombre NVARCHAR(MAX),@sql NVARCHAR(MAX)
+	SELECT @colPivote = N'', @colNombre = N''
+	SELECT @colNombre += N', isnull(p.' + QUOTENAME(fi_ma_edad)+', 0) as ''Edad'+ REPLACE(QUOTENAME(fi_ma_edad,'"'),'"','')+'años''',
+	@colPivote += N', ' + QUOTENAME(fi_ma_edad)
 	  FROM (
 	  SELECT DISTINCT(fi_ma_edad) FROM sdb.tasinac
 	  WHERE 
@@ -505,7 +506,7 @@ BEGIN TRY
 	set @vc_anos =''' + @pc_anos + '''
 	set @vc_meses =''' + @pc_meses + '''
 	set @vc_municipios =''' + @pc_municipios + '''
-	SELECT IdMun,Municipio,' + STUFF(@columns, 1, 2, '') + '
+	SELECT IdMun,Municipio,' + STUFF(@colNombre, 1, 2, '') + '
 	FROM
 	(
 		SELECT vt.fi_rn_mpio_id As IdMun,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_edad AS Edad,count(vt.fi_ma_edad) as Total
@@ -516,9 +517,9 @@ BEGIN TRY
 	PIVOT
 	(
 	  SUM(Total) FOR Edad IN ('
-	  + STUFF(REPLACE(@columns, ', p.[', ',['), 1, 1, '')
+	  + STUFF(@colPivote, 1, 1, '')
 	  + ')
-	) AS p;';
+	) AS p FOR XML AUTO, Elements';
 	PRINT @sql;
 	EXEC sp_executesql @sql;
 
@@ -567,10 +568,12 @@ AS
 	
 BEGIN TRY		
 	SELECT fi_escol_id,fc_escol_desc FROM sdb.CTEscolaridad
-		
-	DECLARE @columns NVARCHAR(MAX), @sql NVARCHAR(MAX);
-	SET @columns = N'';
-	SELECT @columns += N', p.' + QUOTENAME(fi_ma_escol_id)
+	
+	DECLARE
+	@colPivote NVARCHAR(MAX),@colNombre NVARCHAR(MAX),@sql NVARCHAR(MAX)
+	SELECT @colPivote = N'', @colNombre = N''
+	SELECT @colNombre += N', isnull(p.' + QUOTENAME(fi_ma_escol_id)+', 0) as ''Escol'+ REPLACE(QUOTENAME(fi_ma_escol_id,'"'),'"','')+'ID''',
+	@colPivote += N', ' + QUOTENAME(fi_ma_escol_id)
 	  FROM (
 	  SELECT DISTINCT(fi_ma_escol_id) FROM sdb.tasinac
 	  WHERE 
@@ -586,7 +589,7 @@ BEGIN TRY
 	set @vc_anos =''' + @pc_anos + '''
 	set @vc_meses =''' + @pc_meses + '''
 	set @vc_municipios =''' + @pc_municipios + '''
-	SELECT IdMun,Municipio,' + STUFF(@columns, 1, 2, '') + '
+	SELECT IdMun,Municipio,' + STUFF(@colNombre, 1, 2, '') + '
 	FROM
 	(
 		SELECT vt.fi_rn_mpio_id As IdMun,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_escol_id AS Escol,count(vt.fi_ma_escol_id) as Total
@@ -597,9 +600,9 @@ BEGIN TRY
 	PIVOT
 	(
 	  SUM(Total) FOR Escol IN ('
-	  + STUFF(REPLACE(@columns, ', p.[', ',['), 1, 1, '')
+	  + STUFF(@colPivote, 1, 1, '')
 	  + ')
-	) AS p;';
+	) AS p FOR XML AUTO, Elements';
 	PRINT @sql;
 	EXEC sp_executesql @sql;
 
@@ -646,7 +649,7 @@ AS
 BEGIN TRY		
 	SELECT fi_sexo_id,fc_sexo_desc FROM sdb.ctsexo
 
-	SELECT  IdMun,Municipio,[1] as Hombre,[2] as Mujer,[3]  as 'Sin Información'
+	SELECT  IdMun,Municipio,ISNULL([1],0) as Hombre,ISNULL([2],0) as Mujer,ISNULL([3],0)  as 'SinInformación'
 	FROM    (	
 	SELECT vt.fi_rn_mpio_id As IdMun,ctM.fc_mpio_desc AS Municipio, vt.fi_rn_sexo_id as IdSexo,count(vt.fi_rn_sexo_id) as Total
 	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
@@ -654,7 +657,8 @@ BEGIN TRY
 	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_rn_sexo_id
 	)s
 	PIVOT   (SUM(Total) FOR IdSexo IN ([1] ,[2], [3])) pvt	
-	
+	FOR XML AUTO, Elements
+
 	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
 
 END TRY
@@ -698,7 +702,7 @@ AS
 BEGIN TRY		
 	SELECT fi_edo_civil_id,fc_edo_civil_desc FROM SDB.CTEdoCivil
 
-	SELECT  IdMun,Municipio,[11] as CASADA,[12] as SOLTERA,[13] as DIVORCIADA,[14] as VIUDA,[15] as 'UNIÓN LIBRE',[16] as SEPARADA,[88] as 'N.E.',[99] as 'S.I.'
+	SELECT  IdMun,Municipio,ISNULL([11],0) as CASADA,ISNULL([12],0) as SOLTERA,ISNULL([13],0) as DIVORCIADA,ISNULL([14],0) as VIUDA,ISNULL([15],0) as 'UNIÓN LIBRE',ISNULL([16],0) as SEPARADA,ISNULL([88],0) as 'N.E.',ISNULL([99],0) as 'S.I.'
 	FROM    (	
 	SELECT vt.fi_rn_mpio_id As IdMun,ctM.fc_mpio_desc AS Municipio, vt.fi_ma_edo_civil_id as IdEdoCivil,count(vt.fi_ma_edo_civil_id) as Total
 	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
@@ -706,7 +710,7 @@ BEGIN TRY
 	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_edo_civil_id
 	)s
 	PIVOT   (SUM(Total) FOR IdEdoCivil IN ([11] ,[12], [13], [14], [15], [16], [88], [99])) pvt	
-	
+	FOR XML AUTO, Elements
 	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
 
 END TRY
@@ -755,11 +759,12 @@ AS
 	SET NOCOUNT ON
 
 BEGIN TRY		
-		
-	DECLARE @columns NVARCHAR(MAX), @sql NVARCHAR(MAX);
-	SET @columns = N'';
-	SELECT @columns += N', p.' + QUOTENAME(fi_ma_num_nacimiento)
-	  FROM (
+	DECLARE
+	@colPivote NVARCHAR(MAX),@colNombre NVARCHAR(MAX),@sql NVARCHAR(MAX)
+	SELECT @colPivote = N'', @colNombre = N''
+	SELECT @colNombre += N', isnull(p.' + QUOTENAME(fi_ma_num_nacimiento)+', 0) as ''NumNacimiento'+ REPLACE(QUOTENAME(fi_ma_num_nacimiento,'"'),'"','')+'''',
+	@colPivote += N', ' + QUOTENAME(fi_ma_num_nacimiento)	
+	 FROM (
 	  SELECT DISTINCT(fi_ma_num_nacimiento) FROM sdb.tasinac
 	  WHERE 
 	  (@pc_anos IS NULL OR (@pc_anos IS NOT NULL AND YEAR(fd_rn_fecha_hora_nacimiento) IN (SELECT A.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_anos) A)))
@@ -774,7 +779,7 @@ BEGIN TRY
 	set @vc_anos =''' + @pc_anos + '''
 	set @vc_meses =''' + @pc_meses + '''
 	set @vc_municipios =''' + @pc_municipios + '''
-	SELECT IdMun,Municipio,' + STUFF(@columns, 1, 2, '') + '
+	SELECT IdMun,Municipio,' + STUFF(@colNombre, 1, 2, '') + '
 	FROM
 	(
 		SELECT vt.fi_rn_mpio_id As IdMun,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_num_nacimiento AS NumNac,count(vt.fi_ma_num_nacimiento) as Total
@@ -785,9 +790,9 @@ BEGIN TRY
 	PIVOT
 	(
 	  SUM(Total) FOR NumNac IN ('
-	  + STUFF(REPLACE(@columns, ', p.[', ',['), 1, 1, '')
+	  + STUFF(@colPivote, 1, 1, '')
 	  + ')
-	) AS p;';
+	) AS p FOR XML AUTO, Elements';
 	PRINT @sql;
 	EXEC sp_executesql @sql;
 
