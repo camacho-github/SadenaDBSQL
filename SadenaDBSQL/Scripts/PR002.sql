@@ -429,7 +429,7 @@ AS
 
 BEGIN TRY		
 
-	SELECT  IdMun,Municipio,ISNULL([1],0) as TotalSubregistro,ISNULL([2],0) as TotalOportuno,ISNULL([3],0)  as TotalExtemporaneo
+	SELECT  IdMun as 'IDA0Municipio',Municipio,ISNULL([1],0) as 'TotalA0Subregistro',ISNULL([2],0) as 'TotalA0RegistroA0Oportuno',ISNULL([3],0)  as 'TotalA0RegistroA0Extemporaneo'
 	FROM    (	
 	SELECT vt.fi_rn_mpio_id As IdMun,ctM.fc_mpio_desc AS Municipio, vt.fi_estatus_registro_id as IdGrupo,count(vt.fi_estatus_registro_id) as Total
 	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
@@ -437,7 +437,9 @@ BEGIN TRY
 	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_estatus_registro_id
 	)s
 	PIVOT   (SUM(Total) FOR IdGrupo IN ([1] ,[2], [3])) pvt	
-	FOR XML AUTO, Elements  
+	--FOR XML AUTO, Elements  
+	for xml path('Fila'), root('Reporte')
+
 	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
 
 END TRY
