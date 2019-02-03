@@ -437,8 +437,7 @@ BEGIN TRY
 	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_estatus_registro_id
 	)s
 	PIVOT   (SUM(Total) FOR IdGrupo IN ([1] ,[2], [3])) pvt	
-	--FOR XML AUTO, Elements  
-	for xml path('Fila'), root('Reporte')
+	FOR XML PATH('Fila'), ROOT('Reporte')
 
 	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
 
@@ -504,11 +503,24 @@ BEGIN TRY
 	DECLARE 
 	@vc_anos VARCHAR(255),
 	@vc_meses VARCHAR(255),
-	@vc_municipios VARCHAR(400)
-	set @vc_anos =''' + @pc_anos + '''
-	set @vc_meses =''' + @pc_meses + '''
-	set @vc_municipios =''' + @pc_municipios + '''
-	SELECT IdMun,Municipio,' + STUFF(@colNombre, 1, 2, '') + '
+	@vc_municipios VARCHAR(400)'
+
+	IF(@pc_anos IS NOT NULL)
+	BEGIN
+		SET @sql = @sql + ' SET @vc_anos =''' + @pc_anos + ''''
+	END
+	
+	IF(@pc_meses IS NOT NULL)
+	BEGIN
+		SET @sql = @sql + ' SET @pc_meses =''' + @pc_meses + ''''
+	END
+
+	IF(@pc_municipios IS NOT NULL)
+	BEGIN
+		SET @sql = @sql + ' SET @pc_municipios =''' + @pc_municipios + ''''
+	END
+
+	SET @sql = @sql + '	SELECT IdMun,Municipio,' + STUFF(@colNombre, 1, 2, '') + '
 	FROM
 	(
 		SELECT vt.fi_rn_mpio_id As IdMun,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_edad AS Edad,count(vt.fi_ma_edad) as Total
@@ -521,7 +533,7 @@ BEGIN TRY
 	  SUM(Total) FOR Edad IN ('
 	  + STUFF(@colPivote, 1, 1, '')
 	  + ')
-	) AS p FOR XML AUTO, Elements';
+	) AS p  FOR XML PATH(''Fila''), ROOT(''Reporte'')' ;
 	PRINT @sql;
 	EXEC sp_executesql @sql;
 
@@ -569,7 +581,7 @@ AS
 	SET NOCOUNT ON
 	
 BEGIN TRY		
-	SELECT fi_escol_id,fc_escol_desc FROM sdb.CTEscolaridad
+	--SELECT fi_escol_id,fc_escol_desc FROM sdb.CTEscolaridad
 	
 	DECLARE
 	@colPivote NVARCHAR(MAX),@colNombre NVARCHAR(MAX),@sql NVARCHAR(MAX)
@@ -587,11 +599,24 @@ BEGIN TRY
 	DECLARE 
 	@vc_anos VARCHAR(255),
 	@vc_meses VARCHAR(255),
-	@vc_municipios VARCHAR(400)
-	set @vc_anos =''' + @pc_anos + '''
-	set @vc_meses =''' + @pc_meses + '''
-	set @vc_municipios =''' + @pc_municipios + '''
-	SELECT IdMun,Municipio,' + STUFF(@colNombre, 1, 2, '') + '
+	@vc_municipios VARCHAR(400)'
+
+	IF(@pc_anos IS NOT NULL)
+	BEGIN
+		SET @sql = @sql + ' SET @vc_anos =''' + @pc_anos + ''''
+	END
+	
+	IF(@pc_meses IS NOT NULL)
+	BEGIN
+		SET @sql = @sql + ' SET @pc_meses =''' + @pc_meses + ''''
+	END
+
+	IF(@pc_municipios IS NOT NULL)
+	BEGIN
+		SET @sql = @sql + ' SET @pc_municipios =''' + @pc_municipios + ''''
+	END
+
+	SET @sql = @sql + '	SELECT IdMun,Municipio,' + STUFF(@colNombre, 1, 2, '') + '
 	FROM
 	(
 		SELECT vt.fi_rn_mpio_id As IdMun,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_escol_id AS Escol,count(vt.fi_ma_escol_id) as Total
@@ -604,7 +629,7 @@ BEGIN TRY
 	  SUM(Total) FOR Escol IN ('
 	  + STUFF(@colPivote, 1, 1, '')
 	  + ')
-	) AS p FOR XML AUTO, Elements';
+	) AS p FOR XML PATH(''Fila''), ROOT(''Reporte'')' ;
 	PRINT @sql;
 	EXEC sp_executesql @sql;
 
@@ -626,7 +651,7 @@ ERROR:
 	RETURN -1      
  GO
 
- IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSReporteSexoSubregistroMunicipios') AND SysStat & 0xf = 4)
+IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSReporteSexoSubregistroMunicipios') AND SysStat & 0xf = 4)
 BEGIN
 	DROP PROC SDB.PRSReporteSexoSubregistroMunicipios
 END
@@ -649,18 +674,17 @@ AS
 	SET NOCOUNT ON
 
 BEGIN TRY		
-	SELECT fi_sexo_id,fc_sexo_desc FROM sdb.ctsexo
-
-	SELECT  IdMun,Municipio,ISNULL([1],0) as Hombre,ISNULL([2],0) as Mujer,ISNULL([3],0)  as 'SinInformación'
+	
+	SELECT  fi_rn_mpio_id as IDA0Municipio,fc_mpio_desc AS Municipio,ISNULL([1],0) as 'Hombre',ISNULL([2],0) as 'Mujer',ISNULL([3],0)  as 'SinA0Información'
 	FROM    (	
-	SELECT vt.fi_rn_mpio_id As IdMun,ctM.fc_mpio_desc AS Municipio, vt.fi_rn_sexo_id as IdSexo,count(vt.fi_rn_sexo_id) as Total
+	SELECT vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_rn_sexo_id,count(vt.fi_rn_sexo_id) as Total
 	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
 	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id	
 	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_rn_sexo_id
 	)s
-	PIVOT   (SUM(Total) FOR IdSexo IN ([1] ,[2], [3])) pvt	
-	FOR XML AUTO, Elements
-
+	PIVOT   (SUM(Total) FOR fi_rn_sexo_id IN ([1] ,[2], [3])) pvt	
+	FOR XML PATH('Fila'), ROOT('Reporte')
+		
 	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
 
 END TRY
@@ -702,9 +726,9 @@ AS
 	SET NOCOUNT ON
 
 BEGIN TRY		
-	SELECT fi_edo_civil_id,fc_edo_civil_desc FROM SDB.CTEdoCivil
+	--SELECT fi_edo_civil_id,fc_edo_civil_desc FROM SDB.CTEdoCivil
 
-	SELECT  IdMun,Municipio,ISNULL([11],0) as CASADA,ISNULL([12],0) as SOLTERA,ISNULL([13],0) as DIVORCIADA,ISNULL([14],0) as VIUDA,ISNULL([15],0) as 'UNIÓN LIBRE',ISNULL([16],0) as SEPARADA,ISNULL([88],0) as 'N.E.',ISNULL([99],0) as 'S.I.'
+	SELECT  IdMun,Municipio,ISNULL([11],0) as CASADA,ISNULL([12],0) as SOLTERA,ISNULL([13],0) as DIVORCIADA,ISNULL([14],0) as VIUDA,ISNULL([15],0) as 'UNIÓNA0LIBRE',ISNULL([16],0) as SEPARADA,ISNULL([88],0) as 'N.E.',ISNULL([99],0) as 'S.I.'
 	FROM    (	
 	SELECT vt.fi_rn_mpio_id As IdMun,ctM.fc_mpio_desc AS Municipio, vt.fi_ma_edo_civil_id as IdEdoCivil,count(vt.fi_ma_edo_civil_id) as Total
 	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
@@ -712,7 +736,7 @@ BEGIN TRY
 	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_edo_civil_id
 	)s
 	PIVOT   (SUM(Total) FOR IdEdoCivil IN ([11] ,[12], [13], [14], [15], [16], [88], [99])) pvt	
-	FOR XML AUTO, Elements
+	FOR XML PATH('Fila'), ROOT('Reporte')
 	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
 
 END TRY
@@ -777,11 +801,24 @@ BEGIN TRY
 	DECLARE 
 	@vc_anos VARCHAR(255),
 	@vc_meses VARCHAR(255),
-	@vc_municipios VARCHAR(400)
-	set @vc_anos =''' + @pc_anos + '''
-	set @vc_meses =''' + @pc_meses + '''
-	set @vc_municipios =''' + @pc_municipios + '''
-	SELECT IdMun,Municipio,' + STUFF(@colNombre, 1, 2, '') + '
+	@vc_municipios VARCHAR(400)'
+
+	IF(@pc_anos IS NOT NULL)
+	BEGIN
+		SET @sql = @sql + ' SET @vc_anos =''' + @pc_anos + ''''
+	END
+	
+	IF(@pc_meses IS NOT NULL)
+	BEGIN
+		SET @sql = @sql + ' SET @pc_meses =''' + @pc_meses + ''''
+	END
+
+	IF(@pc_municipios IS NOT NULL)
+	BEGIN
+		SET @sql = @sql + ' SET @pc_municipios =''' + @pc_municipios + ''''
+	END
+
+	SET @sql = @sql + '	SELECT IdMun,Municipio,' + STUFF(@colNombre, 1, 2, '') + '
 	FROM
 	(
 		SELECT vt.fi_rn_mpio_id As IdMun,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_num_nacimiento AS NumNac,count(vt.fi_ma_num_nacimiento) as Total
@@ -794,7 +831,7 @@ BEGIN TRY
 	  SUM(Total) FOR NumNac IN ('
 	  + STUFF(@colPivote, 1, 1, '')
 	  + ')
-	) AS p FOR XML AUTO, Elements';
+	) AS p FOR XML PATH(''Fila''), ROOT(''Reporte'')' ;
 	PRINT @sql;
 	EXEC sp_executesql @sql;
 

@@ -255,7 +255,7 @@ SET NOCOUNT ON
 BEGIN TRY	
 	IF EXISTS( SELECT fi_mpio_id FROM SDB.CTMunicipio WITH( NOLOCK ))
 	BEGIN
-		SELECT fi_mpio_id as MpioId, fc_mpio_desc as MpioDesc
+		SELECT fi_mpio_id as MpioId, fc_mpio_desc as MpioDesc, fc_latitud as Latitud, fc_longitud as Longitud, fc_poligono.ToString() as Poligono
 		   FROM SDB.CTMunicipio
 
 		SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
@@ -313,7 +313,7 @@ BEGIN TRY
 		SELECT @vi_usuario_id =fi_usuario_id, @vi_rol_id = fi_rol_id
 		   FROM SDB.TAUsuario WITH( NOLOCK ) where fc_usuario = @pc_identificador AND fi_estatus_id = 1
 
-		   print @vi_usuario_id
+		   print @vi_usuario_id + ' ' + @vi_rol_id
 	END
 	ELSE IF EXISTS( SELECT fi_usuario_id FROM SDB.TAUsuario  WITH( NOLOCK ) WHERE fc_correo_e = @pc_identificador and fc_contrasena =  @pc_contrasena AND fi_estatus_id = 1)
 	BEGIN		
@@ -351,7 +351,7 @@ BEGIN TRY
 	END
 END TRY
 BEGIN CATCH		
-		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar cuenta ' + @pc_identificador
+		SELECT @po_msg_code=-1, @po_msg = ERROR_MESSAGE() + ' Error al consultar cuenta ' + @pc_identificador
 		GOTO ERROR
 END CATCH
 	

@@ -290,7 +290,7 @@ GO
 --- Descripcion: Creación de la tabla Usuario Sesión
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------   
-IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.SDB.BIUsuarioSesion') AND SysStat & 0xf = 3)
+IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.BIUsuarioSesion') AND SysStat & 0xf = 3)
 BEGIN
 	CREATE TABLE SDB.BIUsuarioSesion
 	( 
