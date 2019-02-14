@@ -52,3 +52,233 @@ ERROR:
 	SET NOCOUNT OFF        
 	RETURN -1      
  GO
+
+
+ IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRInsOficialia') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRInsOficialia
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que inserta las oficialias
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRInsOficialia(
+@pi_oficialia_id int,
+@pi_mpio_id int,
+@pi_loc_id int,
+@pc_calle varchar(60),
+@pc_numero varchar(10),
+@pc_colonia varchar(60),
+@pc_cp varchar(5),
+@pc_telefono varchar(15),
+@pc_nombres varchar(80),
+@pc_apellidos varchar(80),
+@pc_correo_e varchar(60),
+@pc_latitud varchar(20),
+@pc_longitud varchar(20),
+@pc_observaciones varchar(255),
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 	
+DECLARE 	
+	
+@viConsecutivo INT
+	
+SET NOCOUNT ON
+
+BEGIN TRY		
+
+	--Obtiene el consecutivo para el número de Oficialia
+	SELECT 
+		@viConsecutivo = ISNULL(MAX(fi_oid), 0) + 1 
+	FROM 
+		SDB.TAOficialias WITH(ROWLOCK, UPDLOCK) 
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener el número de consecutivo' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+
+BEGIN TRY
+	INSERT INTO SDB.TAOficialias 
+		   (fi_oid
+           ,fi_oficialia_id
+           ,fi_mpio_id
+           ,fi_loc_id
+           ,fc_calle
+           ,fc_numero
+           ,fc_colonia
+           ,fc_cp
+           ,fc_telefono
+           ,fc_nombres
+           ,fc_apellidos
+           ,fc_correo_e
+           ,fc_latitud
+           ,fc_longitud
+           ,fc_observaciones)
+     VALUES
+           (@viConsecutivo,
+		    @pi_oficialia_id,
+			@pi_mpio_id,
+			@pi_loc_id,
+			@pc_calle,
+			@pc_numero,
+			@pc_colonia,
+			@pc_cp,
+			@pc_telefono,
+			@pc_nombres,
+			@pc_apellidos,
+			@pc_correo_e,
+			@pc_latitud,
+			@pc_longitud,
+			@pc_observaciones)
+
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al insertar oficialia ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
+  
+
+IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRUOficialia') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRUOficialia
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que actualiza las oficialias
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRUOficialia(
+@pi_o_id int,
+@pi_oficialia_id int,
+@pi_mpio_id int,
+@pi_loc_id int,
+@pc_calle varchar(60),
+@pc_numero varchar(10),
+@pc_colonia varchar(60),
+@pc_cp varchar(5),
+@pc_telefono varchar(15),
+@pc_nombres varchar(80),
+@pc_apellidos varchar(80),
+@pc_correo_e varchar(60),
+@pc_latitud varchar(20),
+@pc_longitud varchar(20),
+@pc_observaciones varchar(255),
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 	DECLARE
+@vdFechaActual	DATETIME
+	
+SET NOCOUNT ON
+
+BEGIN TRY
+	
+	SELECT @vdFechaActual = SYSDATETIME()
+	
+	UPDATE SDB.TAOficialias 
+	SET 
+        fi_oficialia_id = @pi_oficialia_id
+        ,fi_mpio_id = @pi_mpio_id
+        ,fi_loc_id = @pi_loc_id
+        ,fc_calle = @pc_calle
+        ,fc_numero = @pc_numero
+        ,fc_colonia = @pc_colonia
+        ,fc_cp = @pc_cp
+        ,fc_telefono = @pc_telefono
+        ,fc_nombres = @pc_nombres
+        ,fc_apellidos = @pc_apellidos
+        ,fc_correo_e = @pc_correo_e
+        ,fc_latitud = @pc_latitud
+        ,fc_longitud = @pc_longitud
+        ,fc_observaciones = @pc_observaciones
+		,fd_fecha_act = @vdFechaActual
+     WHERE
+		fi_oid = @pi_o_id
+
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al actualizar oficialia ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
+
+
+
+
+IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRDelOficialia') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRDelOficialia
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que elimina las oficialias
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRDelOficialia(
+@pi_o_id int,
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 	DECLARE
+@vdFechaActual	DATETIME
+	
+SET NOCOUNT ON
+
+BEGIN TRY
+	
+	SELECT @vdFechaActual = SYSDATETIME()
+	
+	UPDATE SDB.TAOficialias 
+	SET         
+		fi_estatus_id = 2
+	    ,fd_fecha_act = @vdFechaActual
+     WHERE
+		fi_oid = @pi_o_id
+
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al eliminar oficialia ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO

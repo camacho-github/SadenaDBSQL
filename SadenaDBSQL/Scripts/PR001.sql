@@ -233,6 +233,57 @@ ERROR:
 	RETURN -1      
  GO
 
+ IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSCTLocalidadCoahuila') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRSCTLocalidadCoahuila
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que recupera el catálogo de localidades de Coahuila
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRSCTLocalidadCoahuila(
+	@po_msg_code INT OUTPUT,
+	@po_msg	VARCHAR(255) OUTPUT)
+
+AS 
+	DECLARE 
+	@CONST_COAHUILA_EDO_ID INT = 5
+
+SET NOCOUNT ON
+
+BEGIN TRY	
+	IF EXISTS( SELECT fi_loc_id FROM SDB.CTLocalidad WITH( NOLOCK ))
+	BEGIN
+		SELECT fi_loc_edo_id as LocEdoId, fc_loc_edo_desc as LocEdoDesc, fi_loc_mpio_id as LocMpioId, fc_loc_mpio_desc as LocMpioDesc, fi_loc_id as LocId, fc_loc_desc as LocDesc
+		   FROM SDB.CTLocalidad 
+		   WHERE fi_loc_edo_id = @CONST_COAHUILA_EDO_ID
+		   AND fi_loc_mpio_id > 0 AND fi_loc_mpio_id < 999
+		   order by fi_loc_mpio_id,fi_loc_id
+
+		SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
+	END
+	ELSE
+	BEGIN
+		SELECT @po_msg_code=1, @po_msg = 'No se encontraron registros en el catálogo localidad'		
+	END
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar catálogo de localidad'
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
+
 IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSCTMunicipio') AND SysStat & 0xf = 4)
 BEGIN
 	DROP PROC SDB.PRSCTMunicipio
@@ -257,6 +308,7 @@ BEGIN TRY
 	BEGIN
 		SELECT fi_mpio_id as MpioId, fc_mpio_desc as MpioDesc, fc_latitud as Latitud, fc_longitud as Longitud, fc_poligono.ToString() as Poligono
 		   FROM SDB.CTMunicipio
+		   ORDER BY fc_mpio_desc ASC
 
 		SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
 	END
