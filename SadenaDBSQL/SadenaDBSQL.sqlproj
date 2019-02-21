@@ -59,7 +59,4 @@
     <Folder Include="Properties" />
     <Folder Include="Scripts" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="Scripts\Script.sql" />
-  </ItemGroup>
 </Project>
