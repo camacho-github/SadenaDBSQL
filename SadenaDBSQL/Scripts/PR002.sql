@@ -1,9 +1,9 @@
 ﻿USE SADENADB
 GO
 
-IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSCatatalogosPreConsulta') AND SysStat & 0xf = 4)
+IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSCatalogosPreConsulta') AND SysStat & 0xf = 4)
 BEGIN
-	DROP PROC SDB.PRSCatatalogosPreConsulta
+	DROP PROC SDB.PRSCatalogosPreConsulta
 END
 GO
 ----------------------------------------------------------------------------------------------------------------------------------      
@@ -12,7 +12,7 @@ GO
 --- Descripcion: Creación de un stored procedure que consulta los catálogos a mostrar en la búsqueda
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
-CREATE PROCEDURE SDB.PRSCatatalogosPreConsulta(
+CREATE PROCEDURE SDB.PRSCatalogosPreConsulta(
 @po_msg_code INT OUTPUT,
 @po_msg	VARCHAR(255) OUTPUT)
 
@@ -54,7 +54,7 @@ BEGIN TRY
 
 		SET LANGUAGE Spanish
 	
-		SELECT  DATENAME(MONTH, DATEADD(MONTH, x.number, '20000101')) AS MesCarga
+		SELECT  (x.number + 1) as MesId,DATENAME(MONTH, DATEADD(MONTH, x.number, '20000101')) AS MesDesc
 		FROM    master.dbo.spt_values x
 		WHERE   x.type = 'P'        
 		AND     x.number <= DATEDIFF(MONTH, '20000101', '20001231'); 
@@ -301,9 +301,9 @@ BEGIN TRY
 	VT.fi_mpio_id_sic,
 	VT.fi_estatus_registro_id,
 	VT.fi_estatus_duplicado_sic
-	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) VT
-		
-	SELECT 'Totales Subregistro', ct.fi_estatus_registro_desc as NombreGrupo,count(vt.fi_estatus_registro_id) as Total
+	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) VT		
+
+	SELECT 'Totales Subregistro', vt.fi_estatus_registro_id as IdGrupo, ct.fi_estatus_registro_desc as NombreGrupo,count(vt.fi_estatus_registro_id) as Total
 	FROM @vtRegistros vt INNER JOIN SDB.CTEstatusRegistro ct
 	ON vt.fi_estatus_registro_id = ct.fi_estatus_registro_id
 	GROUP BY vt.fi_estatus_registro_id,ct.fi_estatus_registro_desc
