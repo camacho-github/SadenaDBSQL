@@ -72,7 +72,8 @@ BEGIN TRY
 	FROM SDB.TAOficinas o
 	INNER JOIN SDB.CTLocalidad l
 	ON o.fi_edo_id = l.fi_loc_edo_id AND o.fi_mpio_id = L.fi_loc_mpio_id AND o.fi_loc_id = l.fi_loc_id
-	WHERE o.fi_edo_id = 5 AND
+	WHERE fi_estatus_id = 1
+	AND o.fi_edo_id = 5 AND
 	(@pc_municipios IS NULL OR (o.fi_mpio_id IN(SELECT Mun.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_municipios) Mun)))
 	
 	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
@@ -118,6 +119,7 @@ BEGIN TRY
 	o.fi_oid AS OId,
 	o.fi_oficina_id AS OficinaId,
 	o.fi_tipo_id AS TipoId,	
+	t.fi_tipo_oficina_desc AS TipoDesc,	-------------------------
 	o.fc_tipo_institucion AS TipoInstitucion,
 	o.fc_institucion AS Institucion,
 	o.fc_latitud AS Latitud, 
@@ -142,7 +144,7 @@ BEGIN TRY
 	o.fi_inv_serv_agua AS InvSerAgua,
 	o.fi_inv_local_propio AS InvLocalPropio,
 	o.fi_inv_serv_sanitario AS InvSerSanitario,
-	o.fi_inv_escritorios AS InvSerEscritorios,
+	o.fi_inv_escritorios AS InvEscritorios,
 	o.fi_inv_sillas AS InvSillas,
 	o.fi_inv_archiveros AS InvArchiveros,
 	o.fi_inv_computo_priv AS InvCompPriv,
@@ -161,6 +163,8 @@ BEGIN TRY
 	o.fd_fecha_alta AS FechaAlta,
 	o.fd_fecha_act AS FechaAct
 	FROM SDB.TAOficinas o
+	INNER JOIN SDB.CTTipoOficina t
+	ON o.fi_tipo_id = t.fi_tipo_oficina_id
 	INNER JOIN SDB.CTLocalidad l
 	ON o.fi_edo_id = l.fi_loc_edo_id AND o.fi_mpio_id = L.fi_loc_mpio_id AND o.fi_loc_id = l.fi_loc_id
 	WHERE o.fi_oid = @pi_o_id
@@ -246,9 +250,9 @@ DECLARE
 	
 SET NOCOUNT ON
 
-IF EXISTS(SELECT 1 FROM SDB.TAOficinas WHERE fi_Oficina_id = @pi_Oficina_id AND fi_edo_id = @pi_edo_id AND fi_mpio_id=@pi_mpio_id)
+IF EXISTS(SELECT 1 FROM SDB.TAOficinas WHERE fi_Oficina_id = @pi_Oficina_id and fi_tipo_id =  @pi_tipo_id AND fi_edo_id = @pi_edo_id AND fi_mpio_id=@pi_mpio_id)
 BEGIN
-	SELECT @po_msg_code=-1, @po_msg = 'El número de Oficialía ya existe, favor de validar la información'
+	SELECT @po_msg_code=-1, @po_msg = 'El número de Oficina ya existe, favor de validar la información'
 	GOTO ERROR
 END
 
@@ -387,7 +391,7 @@ CREATE PROCEDURE SDB.PRUOficina(
 @pc_institucion varchar(30),
 @pc_latitud varchar(20),
 @pc_longitud varchar(20),
-@pc_region int,
+@pc_region varchar(20),
 @pi_edo_id int,
 @pi_mpio_id int,
 @pi_loc_id int, 
