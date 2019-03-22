@@ -1,4 +1,4 @@
-锘縐SE SADENADB
+USE SADENADB
 GO
 
 --ALTER USER [UserDev] WITH DEFAULT_SCHEMA = SDB;
@@ -6,7 +6,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de un Schema  
+--- Descripcion: Creaci髇 de un Schema  
 --- Aplicacion:  SADENADB  
 ---------------------------------------------------------------------------------------------------------------------------------- 
 IF NOT EXISTS ( SELECT  * FROM    sys.schemas  WHERE   name = N'SDB' ) 
@@ -27,7 +27,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n del cat谩logo tipo de carga
+--- Descripcion: Creaci髇 del cat醠ogo tipo de carga
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------   
 IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.CTControlTipo') AND SysStat & 0xf = 3)
@@ -55,7 +55,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n del cat谩logo estatus del registro 
+--- Descripcion: Creaci髇 del cat醠ogo estatus del registro 
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------   
 IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.CTEstatusRegistro') AND SysStat & 0xf = 3)
@@ -84,7 +84,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n del cat谩logo sexo  
+--- Descripcion: Creaci髇 del cat醠ogo sexo  
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------   
 IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.CTSexo') AND SysStat & 0xf = 3)
@@ -100,7 +100,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave primaria para la tabla CatSexo  
+--- Descripcion: Creaci髇 de la llave primaria para la tabla CatSexo  
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.PK001CTSexo'))
@@ -119,7 +119,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n del cat谩logo edo civil  
+--- Descripcion: Creaci髇 del cat醠ogo edo civil  
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------   
 IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.CTEdoCivil') AND SysStat & 0xf = 3)
@@ -135,7 +135,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave primaria para la tabla CatEdoCivil  
+--- Descripcion: Creaci髇 de la llave primaria para la tabla CatEdoCivil  
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.PK001CTEdoCivil'))
@@ -154,7 +154,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n del cat谩logo escolaridad 
+--- Descripcion: Creaci髇 del cat醠ogo escolaridad 
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------   
 IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.CTEscolaridad') AND SysStat & 0xf = 3)
@@ -170,7 +170,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave primaria para la tabla escolaridad  
+--- Descripcion: Creaci髇 de la llave primaria para la tabla escolaridad  
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.PK001CTEscolaridad'))
@@ -189,7 +189,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n del cat谩logo municipios 
+--- Descripcion: Creaci髇 del cat醠ogo municipios 
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------   
 IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.CTMunicipio') AND SysStat & 0xf = 3)
@@ -208,7 +208,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave primaria para la tabla localidad  
+--- Descripcion: Creaci髇 de la llave primaria para la tabla localidad  
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.PK001CTMunicipio'))
@@ -226,7 +226,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n del cat谩logo localidad 
+--- Descripcion: Creaci髇 del cat醠ogo localidad 
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------   
 IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.CTLocalidad') AND SysStat & 0xf = 3)
@@ -246,7 +246,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave primaria para la tabla localidad  
+--- Descripcion: Creaci髇 de la llave primaria para la tabla localidad  
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.PK001CTLocalidad'))
@@ -262,7 +262,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n del cat谩logo roles
+--- Descripcion: Creaci髇 del cat醠ogo roles
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------   
 IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.CTRol') AND SysStat & 0xf = 3)
@@ -278,7 +278,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave primaria para el cat谩logo roles
+--- Descripcion: Creaci髇 de la llave primaria para el cat醠ogo roles
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.PK001CTRol'))
@@ -291,7 +291,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n del cat谩logo status (usuario, sesi贸n)
+--- Descripcion: Creaci髇 del cat醠ogo status (usuario, sesi髇)
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------   
 IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.CTEstatus') AND SysStat & 0xf = 3)
@@ -307,7 +307,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave primaria para el cat谩logo roles
+--- Descripcion: Creaci髇 de la llave primaria para el cat醠ogo roles
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.PK001CTEstatus'))
@@ -320,7 +320,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n del cat谩logo Estatus de control
+--- Descripcion: Creaci髇 del cat醠ogo Estatus de control
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------   
 IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.CTEstatusControl') AND SysStat & 0xf = 3)
@@ -336,7 +336,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave primaria para el cat谩logo de estatus de carga
+--- Descripcion: Creaci髇 de la llave primaria para el cat醠ogo de estatus de carga
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.PK001CTEstatusControl'))

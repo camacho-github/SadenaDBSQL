@@ -1,4 +1,5 @@
-锘縄F EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TAOficinas') AND SysStat & 0xf = 3)
+USE SADENADB
+IF EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TAOficinas') AND SysStat & 0xf = 3)
 BEGIN
 	DROP TABLE SDB.TAOficinas	
 END
@@ -6,7 +7,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la tabla Oficinas
+--- Descripcion: Creaci髇 de la tabla Oficinas
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------   
 IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TAOficinas') AND SysStat & 0xf = 3)
@@ -63,7 +64,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave primaria para la tabla de oficinas
+--- Descripcion: Creaci髇 de la llave primaria para la tabla de oficinas
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.PK001TAOficinas'))
@@ -76,7 +77,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de un constraint default para la tabla oficinas 
+--- Descripcion: Creaci髇 de un constraint default para la tabla oficinas 
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.DEF001TAOficinas'))
@@ -110,7 +111,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave foranea para la tabla oficialias
+--- Descripcion: Creaci髇 de la llave foranea para la tabla oficialias
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.FK001TAOficinas'))
@@ -124,7 +125,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave foranea para la tabla oficialias
+--- Descripcion: Creaci髇 de la llave foranea para la tabla oficialias
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.FK003TAOficinas'))
@@ -144,7 +145,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n del cat谩logo de oficinas
+--- Descripcion: Creaci髇 del cat醠ogo de oficinas
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------   
 IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.CTTipoOficina') AND SysStat & 0xf = 3)

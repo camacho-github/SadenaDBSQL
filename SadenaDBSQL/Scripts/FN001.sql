@@ -1,4 +1,4 @@
-锘縰se SADENADB
+use SADENADB
 go
 
 IF  EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('sdb.FNConvierteNumero'))
@@ -7,7 +7,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de una funci贸n para eliminar caracteres de un n煤mero
+--- Descripcion: Creaci髇 de una funci髇 para eliminar caracteres de un n鷐ero
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE FUNCTION sdb.FNConvierteNumero
@@ -34,7 +34,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de una funci贸n para convertir una cadena divida por comas a una tabla
+--- Descripcion: Creaci髇 de una funci髇 para convertir una cadena divida por comas a una tabla
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE FUNCTION sdb.FNConvierteCadenaEnTablaEnteros (@lista VARCHAR(MAX))
@@ -68,7 +68,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de una funci贸n para crear la tabla de combinaciones de  subregistros de nacimientos
+--- Descripcion: Creaci髇 de una funci髇 para crear la tabla de combinaciones de  subregistros de nacimientos
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE FUNCTION sdb.FNObtieneTablaSubregistro(  

@@ -1,4 +1,4 @@
-锘縐SE SADENADB
+USE SADENADB
 GO
 
 
@@ -10,18 +10,19 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la tabla temporal del SINAC
+--- Descripcion: Creaci髇 de la tabla temporal del SINAC
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------   
 IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TMSINAC') AND SysStat & 0xf = 3)
 BEGIN
+		
 	CREATE TABLE SDB.TMSINAC
 	( 
 	fc_folio varchar(20) NOT NULL,
-	fc_nombre varchar(50) NOT NULL,
-	fc_paterno varchar(50) NOT NULL,
-	fc_materno varchar(50) NOT NULL,
-	fc_curp_m varchar(20) NOT NULL,
+	--fc_nombre varchar(50) NULL,
+	--fc_paterno varchar(50) NULL,
+	--fc_materno varchar(50) NULL,
+	--fc_curp_m varchar(20) NULL,
 	fi_ent_nacm int NOT NULL,
 	fi_mpo_nacm int NOT NULL,
 	fd_fech_nac varchar(30) NOT NULL,
@@ -31,24 +32,39 @@ BEGIN
 	fc_calle_res varchar(80) NOT NULL,
 	fc_numext_res varchar(20),
 	fc_numint_res varchar(20),
-	fc_nomasen_res varchar(40),
-	fc_codpos_res varchar(15),
+	--fc_nomasen_res varchar(40) NULL,
+	--fc_codpos_res varchar(15) NULL,
 	fi_ent_res int NOT NULL,
 	fi_mpo_res int NOT NULL,
 	fi_loc_res int NOT NULL,
-	fc_tel_res varchar(25),
-	fi_num_emb int NOT NULL,
-	fi_num_nacmto int NOT NULL,
+	--fc_tel_res varchar(25) NULL,
+	--fi_num_emb int NULL,
+	--fi_num_nacmto int NULL,
 	fi_num_nacvivo int NOT NULL,
-	fi_hijo_sobv int NOT NULL,
-	fi_hijo_ante int NOT NULL,
-	fi_vive_aun int NOT NULL,
+	--fi_hijo_sobv int NULL,
+	--fi_hijo_ante int NULL,
+	--fi_vive_aun int  NULL,
 	fi_niv_escol int NOT NULL,
 	fc_ocup_hab varchar(60) NOT NULL,
 	fi_sexo int NOT NULL
 	); 
 END
 GO 
+
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creaci髇 de un constraint default para la tabla  
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.DEF001TMSINAC'))
+BEGIN
+	ALTER TABLE SDB.TMSINAC
+	ADD CONSTRAINT DEF001TMSINAC 
+	DEFAULT (99) FOR fi_ent_nacm;  	
+END
+GO
+
 
 
 IF EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TASINAC') AND SysStat & 0xf = 3)
@@ -60,7 +76,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la tabla SINAC
+--- Descripcion: Creaci髇 de la tabla SINAC
 --- Aplicacion:  SADENADB  
 ----select * from SDB.TASINAC
 ----------------------------------------------------------------------------------------------------------------------------------   
@@ -93,7 +109,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de un 铆ndice para la tabla TASINAC  
+--- Descripcion: Creaci髇 de un 韓dice para la tabla TASINAC  
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM sys.indexes  WITH(NOLOCK)  WHERE NAME = 'IN001TASINAC')
@@ -115,7 +131,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la tabla temporal del SIC
+--- Descripcion: Creaci髇 de la tabla temporal del SIC
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------   
 IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TMSIC') AND SysStat & 0xf = 3)
@@ -124,18 +140,18 @@ BEGIN
 	( 
 	fi_edo_ofi varchar(10) NOT NULL,
 	fi_mun_ofi varchar(10) NOT NULL,
-	fc_descr_mun_ofi varchar(50) NOT NULL,
+	--fc_descr_mun_ofi varchar(50) NOT NULL,
 	fi_oficialia int NOT NULL,
 	fc_ano varchar(4) NULL,
 	fc_fecha_reg varchar(30),
 	fc_fecha_nac varchar(30),
 	fc_localidad varchar(60),
 	fi_municipio int,
-	fc_desc_municipio varchar(60),
+	--fc_desc_municipio varchar(60),
 	fi_estado int NULL,
-	fc_desc_estado varchar(60),
+	--fc_desc_estado varchar(60),
 	fi_pais int,
-	fc_desc_pais varchar(60),
+	--fc_desc_pais varchar(60),
 	fc_no_certif varchar(30),
 	); 
 END
@@ -149,7 +165,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la tabla SINAC
+--- Descripcion: Creaci髇 de la tabla SINAC
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------   
 IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TASIC') AND SysStat & 0xf = 3)
@@ -172,7 +188,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de un 铆ndice para la tabla TASINAC  
+--- Descripcion: Creaci髇 de un 韓dice para la tabla TASINAC  
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM sys.indexes  WITH(NOLOCK)  WHERE NAME = 'IN001TASIC')
@@ -184,7 +200,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la tabla Usuarios
+--- Descripcion: Creaci髇 de la tabla Usuarios
 --- Aplicacion:  SADENADB  
 --ALTER TABLE SDB.BIUsuarioSesion    DROP CONSTRAINT FK001BIUsuarioSesion
 --ALTER TABLE SDB.TAUsuario    DROP CONSTRAINT FK002TAUsuario
@@ -209,7 +225,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave primaria para la tabla Usuarios  
+--- Descripcion: Creaci髇 de la llave primaria para la tabla Usuarios  
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.PK001TAUsuario'))
@@ -223,7 +239,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave foranea para la tabla Usuarios
+--- Descripcion: Creaci髇 de la llave foranea para la tabla Usuarios
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.FK001TAUsuario'))
@@ -237,7 +253,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave foranea para la tabla Usuarios
+--- Descripcion: Creaci髇 de la llave foranea para la tabla Usuarios
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.FK002TAUsuario'))
@@ -247,12 +263,10 @@ BEGIN
 	FOREIGN KEY (fi_estatus_id) REFERENCES SDB.CTEstatus(fi_estatus_id);  
 END
 GO 
-
-
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de un constraint default para la tabla  
+--- Descripcion: Creaci髇 de un constraint default para la tabla  
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.DEF001TAUsuario'))
@@ -268,6 +282,7 @@ BEGIN
 	DEFAULT (SYSDATETIME()) FOR fd_fecha_act;  	
 END
 GO
+
 
 IF EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.BIUsuarioSesion') AND SysStat & 0xf = 3)
 BEGIN
@@ -287,7 +302,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la tabla Usuario Sesi贸n
+--- Descripcion: Creaci髇 de la tabla Usuario Sesi髇
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------   
 IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.BIUsuarioSesion') AND SysStat & 0xf = 3)
@@ -307,7 +322,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave primaria para el cat谩logo roles
+--- Descripcion: Creaci髇 de la llave primaria para el cat醠ogo roles
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.PK001BIUsuarioSesion'))
@@ -321,7 +336,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave foranea para la tabla UsuarioSesion
+--- Descripcion: Creaci髇 de la llave foranea para la tabla UsuarioSesion
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.FK001BIUsuarioSesion'))
@@ -336,7 +351,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de un constraint default para la tabla  
+--- Descripcion: Creaci髇 de un constraint default para la tabla  
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.DEF001BTUsuarioSesion'))
@@ -361,7 +376,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la tabla para control de carga de archivos
+--- Descripcion: Creaci髇 de la tabla para control de carga de archivos
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------   
 IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TAControlCarga') AND SysStat & 0xf = 3)
@@ -372,8 +387,8 @@ BEGIN
 	fi_sesion_id int NOT NULL,
 	fi_control_tipo_id int NOT NULL,
 	fc_ano varchar(4) NOT NULL,
-	fc_nombre_archivo varchar(40) NOT NULL,
-	fc_extension varchar(8) NOT NULL,
+	fc_nombre_archivo varchar(255) NOT NULL,
+	--fc_extension varchar(8) NOT NULL,
 	fi_estatus_control_id int NOT NULL,
 	fd_fecha_alta datetime NOT NULL,
 	fd_fecha_act datetime NOT NULL
@@ -385,7 +400,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave primaria para la tabla control de carga
+--- Descripcion: Creaci髇 de la llave primaria para la tabla control de carga
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.PK001TAControlCarga'))
@@ -398,7 +413,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave foranea para la tabla control de carga
+--- Descripcion: Creaci髇 de la llave foranea para la tabla control de carga
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.FK001TAControlCarga'))
@@ -411,7 +426,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave foranea para la tabla control de carga
+--- Descripcion: Creaci髇 de la llave foranea para la tabla control de carga
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.FK002TAControlCarga'))
@@ -425,7 +440,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de la llave foranea para la tabla control de carga y tipo de carga
+--- Descripcion: Creaci髇 de la llave foranea para la tabla control de carga y tipo de carga
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.FK003TAControlCarga'))
@@ -439,7 +454,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de los constraint default para la tabla  TAControlCarga
+--- Descripcion: Creaci髇 de los constraint default para la tabla  TAControlCarga
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.DEF001TAControlCarga'))

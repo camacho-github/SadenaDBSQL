@@ -1,15 +1,16 @@
-ï»¿USE SADENADB
+USE SADENADB
 GO
 
 IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSCTEstatusRegistro') AND SysStat & 0xf = 4)
 BEGIN
 	DROP PROC SDB.PRSCTEstatusRegistro
 END
+
 GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: CreaciÃ³n de un stored procedure que recupera el catÃ¡logo de estatus registro
+--- Descripcion: Creación de un stored procedure que recupera el catálogo de estatus registro
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRSCTEstatusRegistro(
@@ -26,15 +27,15 @@ BEGIN TRY
 		SELECT fi_estatus_registro_id as EstatusRegistroId, fi_estatus_registro_desc as EstatusRegistroDesc
 		   FROM SDB.CTEstatusRegistro
 
-		SELECT @po_msg_code=0, @po_msg = 'La ejecuciÃ³n del procedimiento fue exitosa'		
+		SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
 	END
 	ELSE
 	BEGIN
-		SELECT @po_msg_code=1, @po_msg = 'No se encontraron registros en el catÃ¡logo estatus del registro'		
+		SELECT @po_msg_code=1, @po_msg = 'No se encontraron registros en el catálogo estatus del registro'		
 	END
 END TRY
 BEGIN CATCH
-		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar catÃ¡logo de estatus del registro'
+		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar catálogo de estatus del registro'
 		GOTO ERROR
 END CATCH
 	
@@ -55,7 +56,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: CreaciÃ³n de un stored procedure que recupera el catÃ¡logo de sexo
+--- Descripcion: Creación de un stored procedure que recupera el catálogo de sexo
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRSCTSexo(
@@ -72,15 +73,15 @@ BEGIN TRY
 		SELECT fi_sexo_id as SexoId, fc_sexo_desc as SexoDesc
 		   FROM SDB.CTSexo
 
-		SELECT @po_msg_code=0, @po_msg = 'La ejecuciÃ³n del procedimiento fue exitosa'		
+		SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
 	END
 	ELSE
 	BEGIN
-		SELECT @po_msg_code=1, @po_msg = 'No se encontraron registros en el catÃ¡logo de sexo'		
+		SELECT @po_msg_code=1, @po_msg = 'No se encontraron registros en el catálogo de sexo'		
 	END
 END TRY
 BEGIN CATCH
-		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar catÃ¡logo de sexo'
+		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar catálogo de sexo'
 		GOTO ERROR
 END CATCH
 	
@@ -102,7 +103,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: CreaciÃ³n de un stored procedure que recupera el catÃ¡logo de estado civil
+--- Descripcion: Creación de un stored procedure que recupera el catálogo de estado civil
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRSCTEdoCivil(
@@ -119,15 +120,15 @@ BEGIN TRY
 		SELECT fi_edo_civil_id as EdoCivilId, fc_edo_civil_desc as EdoCivilDesc
 		   FROM SDB.CTEdoCivil
 
-		SELECT @po_msg_code=0, @po_msg = 'La ejecuciÃ³n del procedimiento fue exitosa'		
+		SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
 	END
 	ELSE
 	BEGIN
-		SELECT @po_msg_code=1, @po_msg = 'No se encontraron registros en el catÃ¡logo estado civil'		
+		SELECT @po_msg_code=1, @po_msg = 'No se encontraron registros en el catálogo estado civil'		
 	END
 END TRY
 BEGIN CATCH
-		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar catÃ¡logo de estado civil'
+		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar catálogo de estado civil'
 		GOTO ERROR
 END CATCH
 	
@@ -149,7 +150,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: CreaciÃ³n de un stored procedure que recupera el catÃ¡logo de escolaridad
+--- Descripcion: Creación de un stored procedure que recupera el catálogo de escolaridad
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRSCTEscolaridad(
@@ -166,15 +167,15 @@ BEGIN TRY
 		SELECT fi_escol_id as EscolId, fc_escol_desc as EscolDesc
 		   FROM SDB.CTEscolaridad 
 
-		SELECT @po_msg_code=0, @po_msg = 'La ejecuciÃ³n del procedimiento fue exitosa'		
+		SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
 	END
 	ELSE
 	BEGIN
-		SELECT @po_msg_code=1, @po_msg = 'No se encontraron registros en el catÃ¡logo escolaridad'		
+		SELECT @po_msg_code=1, @po_msg = 'No se encontraron registros en el catálogo escolaridad'		
 	END
 END TRY
 BEGIN CATCH
-		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar catÃ¡logo de escolaridad'
+		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar catálogo de escolaridad'
 		GOTO ERROR
 END CATCH
 	
@@ -195,7 +196,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: CreaciÃ³n de un stored procedure que recupera el catÃ¡logo de localidad
+--- Descripcion: Creación de un stored procedure que recupera el catálogo de localidad
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRSCTLocalidad(
@@ -212,15 +213,15 @@ BEGIN TRY
 		SELECT fi_loc_edo_id as LocEdoId, fc_loc_edo_desc as LocEdoDesc, fi_loc_mpio_id as LocMpioId, fc_loc_mpio_desc as LocMpioDesc, fi_loc_id as LocId, fc_loc_desc as LocDesc
 		   FROM SDB.CTLocalidad order by fi_loc_edo_id,fi_loc_mpio_id,fi_loc_id
 
-		SELECT @po_msg_code=0, @po_msg = 'La ejecuciÃ³n del procedimiento fue exitosa'		
+		SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
 	END
 	ELSE
 	BEGIN
-		SELECT @po_msg_code=1, @po_msg = 'No se encontraron registros en el catÃ¡logo localidad'		
+		SELECT @po_msg_code=1, @po_msg = 'No se encontraron registros en el catálogo localidad'		
 	END
 END TRY
 BEGIN CATCH
-		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar catÃ¡logo de localidad'
+		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar catálogo de localidad'
 		GOTO ERROR
 END CATCH
 	
@@ -241,7 +242,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: CreaciÃ³n de un stored procedure que recupera el catÃ¡logo de localidades de Coahuila
+--- Descripcion: Creación de un stored procedure que recupera el catálogo de localidades de Coahuila
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRSCTLocalidadCoahuila(
@@ -263,15 +264,15 @@ BEGIN TRY
 		   AND fi_loc_mpio_id > 0 AND fi_loc_mpio_id < 999
 		   order by fi_loc_mpio_id,fi_loc_id
 
-		SELECT @po_msg_code=0, @po_msg = 'La ejecuciÃ³n del procedimiento fue exitosa'		
+		SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
 	END
 	ELSE
 	BEGIN
-		SELECT @po_msg_code=1, @po_msg = 'No se encontraron registros en el catÃ¡logo localidad'		
+		SELECT @po_msg_code=1, @po_msg = 'No se encontraron registros en el catálogo localidad'		
 	END
 END TRY
 BEGIN CATCH
-		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar catÃ¡logo de localidad'
+		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar catálogo de localidad'
 		GOTO ERROR
 END CATCH
 	
@@ -292,7 +293,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: CreaciÃ³n de un stored procedure que recupera el catÃ¡logo de municipios
+--- Descripcion: Creación de un stored procedure que recupera el catálogo de municipios
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRSCTMunicipio(
@@ -310,15 +311,15 @@ BEGIN TRY
 		   FROM SDB.CTMunicipio
 		   ORDER BY fc_mpio_desc ASC
 
-		SELECT @po_msg_code=0, @po_msg = 'La ejecuciÃ³n del procedimiento fue exitosa'		
+		SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
 	END
 	ELSE
 	BEGIN
-		SELECT @po_msg_code=1, @po_msg = 'No se encontraron registros en el catÃ¡logo municipio'		
+		SELECT @po_msg_code=1, @po_msg = 'No se encontraron registros en el catálogo municipio'		
 	END
 END TRY
 BEGIN CATCH
-		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar catÃ¡logo de municipio'
+		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar catálogo de municipio'
 		GOTO ERROR
 END CATCH
 	
@@ -340,7 +341,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: CreaciÃ³n de un stored procedure que valida e inicia la sesiÃ³n de un usuario
+--- Descripcion: Creación de un stored procedure que valida e inicia la sesión de un usuario
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRNIniciarSesion(
@@ -395,11 +396,11 @@ BEGIN TRY
 		SELECT @vi_sesion_id as SesionId, U.fi_usuario_id as UsuarioId, U.fc_usuario as UsuarioDesc, U.fc_correo_e as CorreoE, U.fi_rol_id as RolId, R.fc_rol_desc as RolDesc
 		   FROM SDB.TAUsuario U  WITH( NOLOCK ) INNER JOIN SDB.CTRol R WITH( NOLOCK ) on U.fi_rol_id = R.fi_rol_id WHERE  U.fi_usuario_id = @vi_usuario_id
 
-		SELECT @po_msg_code=0, @po_msg = 'La ejecuciÃ³n del procedimiento fue exitosa'		
+		SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
 	END
 	ELSE
 	BEGIN
-		SELECT @po_msg_code=1, @po_msg = 'El usuario, la cuenta o la contraseÃ±a no es correcta'					
+		SELECT @po_msg_code=1, @po_msg = 'El usuario, la cuenta o la contraseña no es correcta'					
 	END
 END TRY
 BEGIN CATCH		
@@ -425,7 +426,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: CreaciÃ³n de un stored procedure que finaliza la sesiÃ³n de un usuario
+--- Descripcion: Creación de un stored procedure que finaliza la sesión de un usuario
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRNFinalizarSesion(
@@ -450,15 +451,15 @@ BEGIN TRY
 		SELECT @pi_sesion_id as SesionId, U.fi_usuario_id as UsuarioId, U.fc_usuario as UsuarioDesc, U.fc_correo_e as CorreoE, U.fi_rol_id as RolId, R.fc_rol_desc as RolDesc
 		   FROM SDB.TAUsuario U WITH( NOLOCK ) INNER JOIN SDB.CTRol R WITH( NOLOCK ) on U.fi_rol_id = R.fi_rol_id WHERE  U.fi_usuario_id = @vi_usuario_id
 
-		SELECT @po_msg_code=0, @po_msg = 'La ejecuciÃ³n del procedimiento fue exitosa'		
+		SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
 	END
 	ELSE
 	BEGIN
-		SELECT @po_msg_code=1, @po_msg = 'La sesiÃ³n no existe o ya fue cerrada'		
+		SELECT @po_msg_code=1, @po_msg = 'La sesión no existe o ya fue cerrada'		
 	END
 END TRY
 BEGIN CATCH		
-		SELECT @po_msg_code=-1, @po_msg = 'Error al actualizar la sesiÃ³n ' + @pi_sesion_id
+		SELECT @po_msg_code=-1, @po_msg = 'Error al actualizar la sesión ' + @pi_sesion_id
 		GOTO ERROR
 END CATCH
 	
@@ -479,7 +480,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: CreaciÃ³n de un stored procedure que consulta que una sesiÃ³n se encuentre activa
+--- Descripcion: Creación de un stored procedure que consulta que una sesión se encuentre activa
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRSSesionActiva(
@@ -494,15 +495,15 @@ BEGIN TRY
 	IF EXISTS( SELECT fi_sesion_id FROM SDB.BIUsuarioSesion  WITH( NOLOCK ) WHERE fi_sesion_id = @pi_sesion_id and fi_estatus_id =  1)
 	BEGIN
 				
-		SELECT @po_msg_code=0, @po_msg = 'La sesiÃ³n se encuentra activa'		
+		SELECT @po_msg_code=0, @po_msg = 'La sesión se encuentra activa'		
 	END
 	ELSE
 	BEGIN
-		SELECT @po_msg_code=1, @po_msg = 'La sesiÃ³n no existe o ya fue cerrada'		
+		SELECT @po_msg_code=1, @po_msg = 'La sesión no existe o ya fue cerrada'		
 	END
 END TRY
 BEGIN CATCH		
-		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar la sesiÃ³n' + @pi_sesion_id
+		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar la sesión' + @pi_sesion_id
 		GOTO ERROR
 END CATCH
 	
@@ -525,7 +526,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: CreaciÃ³n de un stored procedure que elimina los registros de la tabla temporal SINAC
+--- Descripcion: Creación de un stored procedure que elimina los registros de la tabla temporal SINAC
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRDelTMSINAC(		
@@ -541,7 +542,7 @@ BEGIN TRY
 		TRUNCATE TABLE SDB.TMSINAC		
 	END	
 
-	SELECT @po_msg_code=0, @po_msg = 'La ejecuciÃ³n del procedimiento fue exitosa'
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'
 END TRY
 BEGIN CATCH		
 		SELECT @po_msg_code=-1, @po_msg = 'Error al eliminar la tabla temporal del SINAC '
@@ -565,7 +566,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: CreaciÃ³n de un stored procedure que elimina los registros de la tabla temporal SIC
+--- Descripcion: Creación de un stored procedure que elimina los registros de la tabla temporal SIC
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRDelTMSIC(		
@@ -581,7 +582,7 @@ BEGIN TRY
 		TRUNCATE TABLE SDB.TMSIC				
 	END	
 	
-	SELECT @po_msg_code=0, @po_msg = 'La ejecuciÃ³n del procedimiento fue exitosa'
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'
 
 END TRY
 BEGIN CATCH		
@@ -598,63 +599,62 @@ ERROR:
 	RETURN -1      
  GO
 
-IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRNInsControlCarga') AND SysStat & 0xf = 4)
-BEGIN
-	DROP PROC SDB.PRNInsControlCarga
-END
-GO
-----------------------------------------------------------------------------------------------------------------------------------      
---- Responsable: Jorge Alberto de la Rosa  
---- Fecha      : Diciembre 2018  
---- Descripcion: CreaciÃ³n de un stored procedure que inserta en la tabla control de carga
---- Aplicacion:  SADENADB  
-----------------------------------------------------------------------------------------------------------------------------------  
-CREATE PROCEDURE SDB.PRNInsControlCarga(
-	@pi_sesion_id int,
-	@pi_control_tipo_id int,
-	@pc_ano varchar(4),
-	@pc_nombre_archivo varchar(40),
-	@pc_extension varchar(8),
-	@po_msg_code int OUTPUT,
-	@po_msg	varchar(255) OUTPUT)
-AS
-	DECLARE 
-	@CONST_ESTATUS_CONTROL_PRECARGADO INT = 1,
-	@CONST_ESTATUS_CONTROL_PRECARGADO_ELIMINADO INT = 2,
-	@CONST_ESTATUS_CONTROL_PROCESADO INT = 3,
-	@CONST_ESTATUS_CONTROL_PROCESADO_ELIMINADO INT = 4
+--IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRNInsControlCarga') AND SysStat & 0xf = 4)
+--BEGIN
+--	DROP PROC SDB.PRNInsControlCarga
+--END
+--GO
+------------------------------------------------------------------------------------------------------------------------------------      
+----- Responsable: Jorge Alberto de la Rosa  
+----- Fecha      : Diciembre 2018  
+----- Descripcion: Creación de un stored procedure que inserta en la tabla control de carga
+----- Aplicacion:  SADENADB  
+------------------------------------------------------------------------------------------------------------------------------------  
+--CREATE PROCEDURE SDB.PRNInsControlCarga(
+--	@pi_sesion_id int,
+--	@pi_control_tipo_id int,
+--	@pc_ano varchar(4),
+--	@pc_nombre_archivo varchar(255),
+--	@po_msg_code int OUTPUT,
+--	@po_msg	varchar(255) OUTPUT)
+--AS
+--	DECLARE 
+--	@CONST_ESTATUS_CONTROL_PRECARGADO INT = 1,
+--	@CONST_ESTATUS_CONTROL_PRECARGADO_ELIMINADO INT = 2,
+--	@CONST_ESTATUS_CONTROL_PROCESADO INT = 3,
+--	@CONST_ESTATUS_CONTROL_PROCESADO_ELIMINADO INT = 4
 
-SET NOCOUNT ON
-BEGIN TRY	
-	IF EXISTS( SELECT fi_sesion_id FROM SDB.BIUsuarioSesion  WITH( NOLOCK ) WHERE fi_sesion_id = @pi_sesion_id and fi_estatus_id =  1)
-	BEGIN
-		IF EXISTS( SELECT fi_control_tipo_id from SDB.TAControlCarga WITH( NOLOCK ) WHERE fi_control_tipo_id = @pi_control_tipo_id AND fi_estatus_control_id = @CONST_ESTATUS_CONTROL_PRECARGADO)
-		BEGIN
-			UPDATE SDB.TAControlCarga SET fi_estatus_control_id = @CONST_ESTATUS_CONTROL_PRECARGADO_ELIMINADO, fd_fecha_act = SYSDATETIME()  WHERE fi_control_tipo_id = @pi_control_tipo_id AND fi_estatus_control_id = @CONST_ESTATUS_CONTROL_PRECARGADO
-		END
+--SET NOCOUNT ON
+--BEGIN TRY	
+--	IF EXISTS( SELECT fi_sesion_id FROM SDB.BIUsuarioSesion  WITH( NOLOCK ) WHERE fi_sesion_id = @pi_sesion_id and fi_estatus_id =  1)
+--	BEGIN
+--		IF EXISTS( SELECT fi_control_tipo_id from SDB.TAControlCarga WITH( NOLOCK ) WHERE fi_control_tipo_id = @pi_control_tipo_id AND fi_estatus_control_id = @CONST_ESTATUS_CONTROL_PRECARGADO)
+--		BEGIN
+--			UPDATE SDB.TAControlCarga SET fi_estatus_control_id = @CONST_ESTATUS_CONTROL_PRECARGADO_ELIMINADO, fd_fecha_act = SYSDATETIME()  WHERE fi_control_tipo_id = @pi_control_tipo_id AND fi_estatus_control_id = @CONST_ESTATUS_CONTROL_PRECARGADO
+--		END
 
-		INSERT INTO SDB.TAControlCarga(fi_sesion_id,fi_control_tipo_id,fc_ano,fc_nombre_archivo,fc_extension) VALUES( @pi_sesion_id,@pi_control_tipo_id,@pc_ano,@pc_nombre_archivo,@pc_extension)		
+--		INSERT INTO SDB.TAControlCarga(fi_sesion_id,fi_control_tipo_id,fc_ano,fc_nombre_archivo) VALUES( @pi_sesion_id,@pi_control_tipo_id,@pc_ano,@pc_nombre_archivo)		
 		
-		SELECT @po_msg_code=0, @po_msg = 'La ejecuciÃ³n del procedimiento fue exitosa'		
-	END
-	ELSE
-	BEGIN
-		SELECT @po_msg_code=1, @po_msg = 'La sesiÃ³n no existe o ya fue cerrada'		
-	END
-END TRY
-BEGIN CATCH		
-		SELECT @po_msg_code=-1, @po_msg = 'Error al insertar en tabla de control de carga' + @pi_sesion_id
-		GOTO ERROR
-END CATCH
+--		SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
+--	END
+--	ELSE
+--	BEGIN
+--		SELECT @po_msg_code=1, @po_msg = 'La sesión no existe o ya fue cerrada'		
+--	END
+--END TRY
+--BEGIN CATCH		
+--		SELECT @po_msg_code=-1, @po_msg = 'Error al insertar en tabla de control de carga' + @pi_sesion_id
+--		GOTO ERROR
+--END CATCH
 	
-SET NOCOUNT OFF
-RETURN 0        
+--SET NOCOUNT OFF
+--RETURN 0        
        
-ERROR:        
-	RAISERROR (@po_msg,18,1)      
-	SET NOCOUNT OFF        
-	RETURN -1      
- GO
+--ERROR:        
+--	RAISERROR (@po_msg,18,1)      
+--	SET NOCOUNT OFF        
+--	RETURN -1      
+-- GO
 
 
 IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRNInsControlCarga') AND SysStat & 0xf = 4)
@@ -665,15 +665,14 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: CreaciÃ³n de un stored procedure que inserta en la tabla control de carga
+--- Descripcion: Creación de un stored procedure que inserta en la tabla control de carga
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRNInsControlCarga(
 	@pi_sesion_id int,
 	@pi_control_tipo_id int,
 	@pc_ano varchar(4),
-	@pc_nombre_archivo varchar(40),
-	@pc_extension varchar(8),
+	@pc_nombre_archivo varchar(255),	
 	@po_msg_code int OUTPUT,
 	@po_msg	varchar(255) OUTPUT)
 AS
@@ -692,13 +691,13 @@ BEGIN TRY
 			UPDATE SDB.TAControlCarga SET fi_estatus_control_id = @CONST_ESTATUS_CONTROL_PRECARGADO_ELIMINADO, fd_fecha_act = SYSDATETIME()  WHERE fi_control_tipo_id = @pi_control_tipo_id AND fi_estatus_control_id = @CONST_ESTATUS_CONTROL_PRECARGADO
 		END
 
-		INSERT INTO SDB.TAControlCarga(fi_sesion_id,fi_control_tipo_id,fc_ano,fc_nombre_archivo,fc_extension) VALUES( @pi_sesion_id,@pi_control_tipo_id,@pc_ano,@pc_nombre_archivo,@pc_extension)		
+		INSERT INTO SDB.TAControlCarga(fi_sesion_id,fi_control_tipo_id,fc_ano,fc_nombre_archivo) VALUES( @pi_sesion_id,@pi_control_tipo_id,@pc_ano,@pc_nombre_archivo)		
 		
-		SELECT @po_msg_code=0, @po_msg = 'La ejecuciÃ³n del procedimiento fue exitosa'		
+		SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
 	END
 	ELSE
 	BEGIN
-		SELECT @po_msg_code=1, @po_msg = 'La sesiÃ³n no existe o ya fue cerrada'		
+		SELECT @po_msg_code=1, @po_msg = 'La sesión no existe o ya fue cerrada'		
 	END
 END TRY
 BEGIN CATCH		
@@ -723,7 +722,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  ++++
 --- Fecha      : Diciembre 2018  
---- Descripcion: CreaciÃ³n de un stored procedure que depura la informaciÃ³n de una carga SINAC anterior
+--- Descripcion: Creación de un stored procedure que depura la información de una carga SINAC anterior
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRNDepurarCargaSINAC(
@@ -744,7 +743,7 @@ SET NOCOUNT ON
 BEGIN TRY	
 	--TODO
 	--i) como una mejora de limpieza de la base, 
-	--serÃ¡ necesario una soluciÃ³n diferente que evite escribir en log todos los registros depurados
+	--será necesario una solución diferente que evite escribir en log todos los registros depurados
 	------
 	IF EXISTS( SELECT fi_control_id FROM SDB.TAControlCarga  WITH( NOLOCK ) WHERE fi_control_id = @pi_control_id and fi_estatus_control_id = @CONST_ESTATUS_CONTROL_PRECARGADO)
 	BEGIN		
@@ -759,7 +758,7 @@ BEGIN TRY
 		END
 	END
 	
-	SELECT @po_msg_code=0, @po_msg = 'La ejecuciÃ³n del procedimiento fue exitosa'			
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'			
 END TRY
 BEGIN CATCH		
 		SELECT @po_msg_code=-1, @po_msg = 'Error al depurar cargas de tabla SINAC'  + ERROR_MESSAGE()
@@ -783,7 +782,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: CreaciÃ³n de un stored procedure que depura la informaciÃ³n de una carga anterior
+--- Descripcion: Creación de un stored procedure que depura la información de una carga anterior
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRNDepurarCargaSIC(
@@ -804,7 +803,7 @@ SET NOCOUNT ON
 BEGIN TRY	
 	--TODO
 	--i) como una mejora de limpieza de la base, 
-	--serÃ¡ necesario una soluciÃ³n diferente que evite escribir en log todos los registros depurados
+	--será necesario una solución diferente que evite escribir en log todos los registros depurados
 	------
 	IF EXISTS( SELECT fi_control_id FROM SDB.TAControlCarga  WITH( NOLOCK ) WHERE fi_control_id = @pi_control_id and fi_estatus_control_id = @CONST_ESTATUS_CONTROL_PRECARGADO)
 	BEGIN		
@@ -819,7 +818,7 @@ BEGIN TRY
 		END
 	END
 	
-	SELECT @po_msg_code=0, @po_msg = 'La ejecuciÃ³n del procedimiento fue exitosa'			
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'			
 END TRY
 BEGIN CATCH		
 		SELECT @po_msg_code=-1, @po_msg = 'Error al depurar tablas de carga '  + ERROR_MESSAGE()
@@ -843,7 +842,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: CreaciÃ³n de un stored procedure que procesa y copia los registros del SINAC
+--- Descripcion: Creación de un stored procedure que procesa y copia los registros del SINAC
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRNProcesarCargaSINAC(
@@ -859,6 +858,7 @@ BEGIN TRY
 	BEGIN
 		
 		SELECT @vi_control_id = fi_control_id FROM SDB.TAControlCarga  WITH( NOLOCK ) WHERE fi_control_tipo_id = 2 and fi_estatus_control_id = 1
+		UPDATE SDB.TMSINAC SET fd_hora_nac = '00:00' WHERE fd_hora_nac = '99:99'
 		
 		INSERT INTO SDB.TASINAC(fc_folio_certificado, fc_folio_simple_certificado,fi_control_id, 
 		fi_ma_edad,fi_ma_edo_civil_id,
@@ -882,11 +882,11 @@ BEGIN TRY
 		
 		UPDATE SDB.TAControlCarga SET fi_estatus_control_id = 3, fd_fecha_act = SYSDATETIME()  WHERE fi_control_tipo_id = 2 AND fi_estatus_control_id = 1
 		
-		SELECT @po_msg_code=0, @po_msg = 'La ejecuciÃ³n del procedimiento fue exitosa'		
+		SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
 	END
 	ELSE
 	BEGIN
-		SELECT @po_msg_code=1, @po_msg = 'La sesiÃ³n no existe o ya fue cerrada'		
+		SELECT @po_msg_code=1, @po_msg = 'La sesión no existe o ya fue cerrada'		
 	END
 END TRY
 BEGIN CATCH		
@@ -912,7 +912,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: CreaciÃ³n de un stored procedure que procesa y copia los registros del SIC
+--- Descripcion: Creación de un stored procedure que procesa y copia los registros del SIC
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRNProcesarCargaSIC(
@@ -932,8 +932,10 @@ BEGIN TRY
 		fi_edo_id,fi_mpio_id,fd_rn_fecha_hora_nacimiento,fd_rn_fecha_registro,fi_estatus_duplicado)
 		SELECT CONCAT(fc_no_certif, fc_fecha_reg) ,fc_no_certif,SDB.FNConvierteNumero(fc_no_certif), @vi_control_id, 
 		fi_estado,fi_municipio,
-		convert(datetime,SUBSTRING(fc_fecha_nac,0,9) + ' ' + SUBSTRING(fc_fecha_nac,10,5),3),
-		convert(datetime,SUBSTRING(fc_fecha_reg,0,9),3),0				
+		--convert(datetime,SUBSTRING(ltrim(rtrim(fc_fecha_nac)),0,9) + ' ' + SUBSTRING(ltrim(rtrim(fc_fecha_nac)),10,5),3),
+		convert(datetime,fc_fecha_nac),
+		--convert(datetime,SUBSTRING(ltrim(rtrim(fc_fecha_reg)),0,9),3),0
+		convert(datetime,fc_fecha_reg),0					
 		FROM SDB.TMSIC
 
 		----------------------------------------------------------------------------
@@ -945,15 +947,15 @@ BEGIN TRY
 
 		UPDATE SDB.TAControlCarga SET fi_estatus_control_id = 3, fd_fecha_act = SYSDATETIME()  WHERE fi_control_tipo_id = 3 AND fi_estatus_control_id = 1
 		
-		SELECT @po_msg_code=0, @po_msg = 'La ejecuciÃ³n del procedimiento fue exitosa'		
+		SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
 	END
 	ELSE
 	BEGIN
-		SELECT @po_msg_code=1, @po_msg = 'La sesiÃ³n no existe o ya fue cerrada'		
+		SELECT @po_msg_code=1, @po_msg = 'La sesión no existe o ya fue cerrada'		
 	END
 END TRY
 BEGIN CATCH		
-		SELECT @po_msg_code=-1, @po_msg = 'Error al procesar tabla SINAC ' + ERROR_MESSAGE()
+		SELECT @po_msg_code=-1, @po_msg = 'Error al procesar tabla SIC ' + ERROR_MESSAGE()
 		GOTO ERROR
 END CATCH
 	
@@ -974,7 +976,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: CreaciÃ³n de un stored procedure que procesa quita los duplicados del SIC
+--- Descripcion: Creación de un stored procedure que procesa quita los duplicados del SIC
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRNProcesarDuplicadosSIC(
@@ -1036,7 +1038,7 @@ BEGIN TRY
 		SET @vi_renglonId = @vi_renglonId + 1
 	END
 
-	SELECT @po_msg_code=0, @po_msg = 'La ejecuciÃ³n del procedimiento fue exitosa'		
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
 	
 END TRY
 BEGIN CATCH		

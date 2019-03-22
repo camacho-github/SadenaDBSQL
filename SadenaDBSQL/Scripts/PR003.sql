@@ -1,4 +1,4 @@
-锘縐SE SADENADB
+USE SADENADB
 GO
 
  
@@ -10,7 +10,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de un stored procedure que consulta las oficialias
+--- Descripcion: Creaci髇 de un stored procedure que consulta las oficialias
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRSOficialias(
@@ -36,7 +36,7 @@ BEGIN TRY
 	WHERE o.fi_edo_id = 5 AND
 	(@pc_municipios IS NULL OR (o.fi_mpio_id IN(SELECT Mun.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_municipios) Mun)))
 	
-	SELECT @po_msg_code=0, @po_msg = 'La ejecuci贸n del procedimiento fue exitosa'	
+	SELECT @po_msg_code=0, @po_msg = 'La ejecuci髇 del procedimiento fue exitosa'	
 
 END TRY
 BEGIN CATCH
@@ -61,7 +61,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de un stored procedure que consulta una oficialia
+--- Descripcion: Creaci髇 de un stored procedure que consulta una oficialia
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRSOficialia(
@@ -86,7 +86,7 @@ BEGIN TRY
 	ON o.fi_edo_id = l.fi_loc_edo_id AND o.fi_mpio_id = L.fi_loc_mpio_id AND o.fi_loc_id = l.fi_loc_id
 	WHERE o.fi_oid = @pi_oid
 	
-	SELECT @po_msg_code=0, @po_msg = 'La ejecuci贸n del procedimiento fue exitosa'	
+	SELECT @po_msg_code=0, @po_msg = 'La ejecuci髇 del procedimiento fue exitosa'	
 
 END TRY
 BEGIN CATCH
@@ -112,7 +112,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de un stored procedure que inserta las oficialias
+--- Descripcion: Creaci髇 de un stored procedure que inserta las oficialias
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRInsOficialia(
@@ -142,20 +142,20 @@ SET NOCOUNT ON
 
 IF EXISTS(SELECT 1 FROM SDB.TAOFICIALIAS WHERE fi_oficialia_id = @pi_oficialia_id)
 BEGIN
-	SELECT @po_msg_code=-1, @po_msg = 'El n煤mero de Oficial铆a ya existe, favor de validar la informaci贸n'
+	SELECT @po_msg_code=-1, @po_msg = 'El n鷐ero de Oficial韆 ya existe, favor de validar la informaci髇'
 	GOTO ERROR
 END
 
 BEGIN TRY		
 
-	--Obtiene el consecutivo para el n煤mero de Oficialia
+	--Obtiene el consecutivo para el n鷐ero de Oficialia
 	SELECT 
 		@viConsecutivo = ISNULL(MAX(fi_oid), 0) + 1 
 	FROM 
 		SDB.TAOficialias WITH(ROWLOCK, UPDLOCK) 
 END TRY
 BEGIN CATCH
-		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener el n煤mero de consecutivo' + ERROR_MESSAGE()
+		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener el n鷐ero de consecutivo' + ERROR_MESSAGE()
 		GOTO ERROR
 END CATCH
 
@@ -193,7 +193,7 @@ BEGIN TRY
 			@pc_longitud,
 			@pc_observaciones)
 
-	SELECT @po_msg_code=0, @po_msg = 'La ejecuci贸n del procedimiento fue exitosa'	
+	SELECT @po_msg_code=0, @po_msg = 'La ejecuci髇 del procedimiento fue exitosa'	
 
 END TRY
 BEGIN CATCH
@@ -219,7 +219,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de un stored procedure que actualiza las oficialias
+--- Descripcion: Creaci髇 de un stored procedure que actualiza las oficialias
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRUOficialia(
@@ -270,7 +270,7 @@ BEGIN TRY
      WHERE
 		fi_oid = @pi_o_id
 
-	SELECT @po_msg_code=0, @po_msg = 'La ejecuci贸n del procedimiento fue exitosa'	
+	SELECT @po_msg_code=0, @po_msg = 'La ejecuci髇 del procedimiento fue exitosa'	
 
 END TRY
 BEGIN CATCH
@@ -298,7 +298,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de un stored procedure que elimina las oficialias
+--- Descripcion: Creaci髇 de un stored procedure que elimina las oficialias
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRDelOficialia(
@@ -322,7 +322,7 @@ BEGIN TRY
      WHERE
 		fi_oid = @pi_o_id
 
-	SELECT @po_msg_code=0, @po_msg = 'La ejecuci贸n del procedimiento fue exitosa'	
+	SELECT @po_msg_code=0, @po_msg = 'La ejecuci髇 del procedimiento fue exitosa'	
 
 END TRY
 BEGIN CATCH

@@ -1,4 +1,4 @@
-锘縐SE SADENADB
+USE SADENADB
 GO
 
  
@@ -10,7 +10,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de un stored procedure que consulta las Oficinas
+--- Descripcion: Creaci髇 de un stored procedure que consulta las Oficinas
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRSOficinas(
@@ -76,7 +76,7 @@ BEGIN TRY
 	AND o.fi_edo_id = 5 AND
 	(@pc_municipios IS NULL OR (o.fi_mpio_id IN(SELECT Mun.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_municipios) Mun)))
 	
-	SELECT @po_msg_code=0, @po_msg = 'La ejecuci贸n del procedimiento fue exitosa'	
+	SELECT @po_msg_code=0, @po_msg = 'La ejecuci髇 del procedimiento fue exitosa'	
 
 END TRY
 BEGIN CATCH
@@ -101,7 +101,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de un stored procedure que consulta una Oficina
+--- Descripcion: Creaci髇 de un stored procedure que consulta una Oficina
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRSOficina(
@@ -170,7 +170,7 @@ BEGIN TRY
 	WHERE o.fi_oid = @pi_o_id
 	ORDER BY o.fi_mpio_id,o.fi_loc_id ASC
 	
-	SELECT @po_msg_code=0, @po_msg = 'La ejecuci贸n del procedimiento fue exitosa'	
+	SELECT @po_msg_code=0, @po_msg = 'La ejecuci髇 del procedimiento fue exitosa'	
 
 END TRY
 BEGIN CATCH
@@ -196,7 +196,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de un stored procedure que inserta las Oficinas
+--- Descripcion: Creaci髇 de un stored procedure que inserta las Oficinas
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 
@@ -252,13 +252,13 @@ SET NOCOUNT ON
 
 IF EXISTS(SELECT 1 FROM SDB.TAOficinas WHERE fi_Oficina_id = @pi_Oficina_id and fi_tipo_id =  @pi_tipo_id AND fi_edo_id = @pi_edo_id AND fi_mpio_id=@pi_mpio_id)
 BEGIN
-	SELECT @po_msg_code=-1, @po_msg = 'El n煤mero de Oficina ya existe, favor de validar la informaci贸n'
+	SELECT @po_msg_code=-1, @po_msg = 'El n鷐ero de Oficina ya existe, favor de validar la informaci髇'
 	GOTO ERROR
 END
 
 BEGIN TRY		
 
-	--Obtiene el consecutivo para el n煤mero de Oficina
+	--Obtiene el consecutivo para el n鷐ero de Oficina
 	SELECT 
 		@viConsecutivo = ISNULL(MAX(fi_oid), 0) + 1 
 	FROM 
@@ -266,7 +266,7 @@ BEGIN TRY
 
 END TRY
 BEGIN CATCH
-		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener el n煤mero de consecutivo' + ERROR_MESSAGE()
+		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener el n鷐ero de consecutivo' + ERROR_MESSAGE()
 		GOTO ERROR
 END CATCH
 
@@ -354,7 +354,7 @@ BEGIN TRY
 			@pi_expide_curp,
 			@pi_expide_actas_foraneas)
 
-	SELECT @po_msg_code=0, @po_msg = 'La ejecuci贸n del procedimiento fue exitosa'	
+	SELECT @po_msg_code=0, @po_msg = 'La ejecuci髇 del procedimiento fue exitosa'	
 
 END TRY
 BEGIN CATCH
@@ -380,7 +380,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de un stored procedure que actualiza las Oficinas
+--- Descripcion: Creaci髇 de un stored procedure que actualiza las Oficinas
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRUOficina(
@@ -481,7 +481,7 @@ BEGIN TRY
      WHERE
 		fi_oid = @pi_o_id
 
-	SELECT @po_msg_code=0, @po_msg = 'La ejecuci贸n del procedimiento fue exitosa'	
+	SELECT @po_msg_code=0, @po_msg = 'La ejecuci髇 del procedimiento fue exitosa'	
 
 END TRY
 BEGIN CATCH
@@ -506,7 +506,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creaci贸n de un stored procedure que elimina las Oficinas
+--- Descripcion: Creaci髇 de un stored procedure que elimina las Oficinas
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
 CREATE PROCEDURE SDB.PRDelOficina(
@@ -530,7 +530,7 @@ BEGIN TRY
      WHERE
 		fi_oid = @pi_o_id
 
-	SELECT @po_msg_code=0, @po_msg = 'La ejecuci贸n del procedimiento fue exitosa'	
+	SELECT @po_msg_code=0, @po_msg = 'La ejecuci髇 del procedimiento fue exitosa'	
 
 END TRY
 BEGIN CATCH
