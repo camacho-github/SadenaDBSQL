@@ -325,7 +325,7 @@ BEGIN TRY
 	INNER JOIN SDB.CTSexo cts on cts.fi_sexo_id = r.fi_rn_sexo_id
 	INNER JOIN SDB.CTEdoCivil ctciv on ctciv.fi_edo_civil_id = r.fi_ma_edo_civil_id
 	INNER JOIN SDB.CTEscolaridad ctescol on ctescol.fi_escol_id = r.fi_ma_escol_id	
-	INNER JOIN SDB.CTLocalidad ctloc on ctloc.fi_loc_edo_id = r.fi_ma_dom_edo_id and ctloc.fi_loc_mpio_id = r.fi_ma_dom_mpio_id and ctloc.fi_loc_id = r.fi_ma_dom_loc_id
+	left JOIN SDB.CTLocalidad ctloc on ctloc.fi_loc_edo_id = r.fi_ma_dom_edo_id and ctloc.fi_loc_mpio_id = r.fi_ma_dom_mpio_id and ctloc.fi_loc_id = r.fi_ma_dom_loc_id
 	WHERE r.fi_estatus_registro_id = @CONST_SUBREGISTRO_ID
 
 	SELECT 'Oportunos',r.fc_folio_certificado as Folio,
@@ -345,7 +345,7 @@ BEGIN TRY
 	INNER JOIN SDB.CTSexo cts on cts.fi_sexo_id = r.fi_rn_sexo_id
 	INNER JOIN SDB.CTEdoCivil ctciv on ctciv.fi_edo_civil_id = r.fi_ma_edo_civil_id
 	INNER JOIN SDB.CTEscolaridad ctescol on ctescol.fi_escol_id = r.fi_ma_escol_id	
-	INNER JOIN SDB.CTLocalidad ctloc on ctloc.fi_loc_edo_id = r.fi_ma_dom_edo_id and ctloc.fi_loc_mpio_id = r.fi_ma_dom_mpio_id and ctloc.fi_loc_id = r.fi_ma_dom_loc_id
+	left JOIN SDB.CTLocalidad ctloc on ctloc.fi_loc_edo_id = r.fi_ma_dom_edo_id and ctloc.fi_loc_mpio_id = r.fi_ma_dom_mpio_id and ctloc.fi_loc_id = r.fi_ma_dom_loc_id
 	WHERE fi_estatus_registro_id = @CONST_OPORTUNO_ID
 
 	SELECT 'Extemporaneos',r.fc_folio_certificado as Folio,
@@ -365,7 +365,7 @@ BEGIN TRY
 	INNER JOIN SDB.CTSexo cts on cts.fi_sexo_id = r.fi_rn_sexo_id
 	INNER JOIN SDB.CTEdoCivil ctciv on ctciv.fi_edo_civil_id = r.fi_ma_edo_civil_id
 	INNER JOIN SDB.CTEscolaridad ctescol on ctescol.fi_escol_id = r.fi_ma_escol_id	
-	INNER JOIN SDB.CTLocalidad ctloc on ctloc.fi_loc_edo_id = r.fi_ma_dom_edo_id and ctloc.fi_loc_mpio_id = r.fi_ma_dom_mpio_id and ctloc.fi_loc_id = r.fi_ma_dom_loc_id
+	left JOIN SDB.CTLocalidad ctloc on ctloc.fi_loc_edo_id = r.fi_ma_dom_edo_id and ctloc.fi_loc_mpio_id = r.fi_ma_dom_mpio_id and ctloc.fi_loc_id = r.fi_ma_dom_loc_id
 	WHERE fi_estatus_registro_id = @CONST_EXTEMPORANEO_ID
 
 	SELECT 'Duplicados'
@@ -388,6 +388,197 @@ BEGIN TRY
 	INNER JOIN SDB.CTLocalidad ctloc on ctloc.fi_loc_edo_id = r.fi_ma_dom_edo_id and ctloc.fi_loc_mpio_id = r.fi_ma_dom_mpio_id and ctloc.fi_loc_id = r.fi_ma_dom_loc_id
 	WHERE fi_estatus_registro_id = @CONST_DUPLICADO_ID
 
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener subregistro ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
+
+ IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSAnalisisInfoSIC') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRSAnalisisInfoSIC
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que obtiene el análisis de información de sic
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRSAnalisisInfoSIC(
+@pc_anos VARCHAR(255),
+@pc_meses VARCHAR(255),
+@pc_municipios VARCHAR(255),
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 	
+	DECLARE @vtRegistros TABLE(
+	fi_id_renglon   INT NOT NULL IDENTITY(1,1),
+	fc_folio_certificado varchar(20) NOT NULL,  
+	fc_folio_simple_certificado varchar(20) NOT NULL,  
+	fd_rn_fecha_hora_nacimiento datetime,  
+	fd_rn_fecha_registro datetime,   
+	fi_edo_id int,  
+	fi_mpio_id int,
+	fi_mpio_ofi_id int,
+	fi_oficialia_id int,
+	fc_folio_certificado_sinac varchar(20),  
+	fc_folio_simple_certificado_sinac varchar(20),  
+	fd_rn_fecha_hora_nacimiento_sinac datetime,   
+	fi_estatus_registro_id int NOT NULL
+	)
+	
+	DECLARE
+	@CONST_DUPLICADO_ID INT = 4,
+	@CONST_NOREGISTRADO_SINAC_ID INT = 5,    
+	@CONST_REGISTRADO_FOLIO_SINAC_ID INT = 6, 
+	@CONST_REGISTRADO_FECHA_SINAC_ID INT = 7,   
+	@CONST_COAHUILA_EDO_ID INT = 5
+	
+	SET NOCOUNT ON
+
+BEGIN TRY		
+	-- Inserta todos los registros del sinac, sin subregistro
+	
+	INSERT @vtRegistros(  
+	fc_folio_certificado,  
+	fc_folio_simple_certificado,  
+	fd_rn_fecha_hora_nacimiento,
+	fd_rn_fecha_registro, 
+	fi_edo_id,  
+	fi_mpio_id,
+	fi_mpio_ofi_id,
+	fi_oficialia_id,
+	fc_folio_certificado_sinac, 
+	fc_folio_simple_certificado_sinac,  
+	fd_rn_fecha_hora_nacimiento_sinac,   
+	fi_estatus_registro_id)
+	SELECT 
+	VT.fc_folio_certificado,  
+	VT.fc_folio_simple_certificado,  
+	VT.fd_rn_fecha_hora_nacimiento,
+	VT.fd_rn_fecha_registro, 
+	VT.fi_edo_id,  
+	VT.fi_mpio_id,
+	VT.fi_mpio_ofi_id,
+	VT.fi_oficialia_id,
+	VT.fc_folio_certificado_sinac, 
+	VT.fc_folio_simple_certificado_sinac,  
+	VT.fd_rn_fecha_hora_nacimiento_sinac,   
+	VT.fi_estatus_registro_id
+	FROM SDB.FNObtieneTablaSICAnalisis(@pc_anos,@pc_meses,@pc_municipios) VT
+
+	
+	SELECT 'Totales Subregistro', vt.fi_estatus_registro_id as IdGrupo, ct.fi_estatus_registro_desc as NombreGrupo,count(vt.fi_estatus_registro_id) as Total
+	FROM @vtRegistros vt INNER JOIN SDB.CTEstatusRegistro ct
+	ON vt.fi_estatus_registro_id = ct.fi_estatus_registro_id
+	GROUP BY vt.fi_estatus_registro_id,ct.fi_estatus_registro_desc
+	
+
+	--'PorFolio'
+	SELECT 
+	r.fc_folio_certificado as 'Folio SIC',
+	r.fc_folio_certificado_sinac as 'Folio SINAC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 105) as 'Fecha Nacimiento SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento_sinac, 105)  as 'Fecha Nacimiento SINAC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_registro, 105) as 'Fecha Registro SIC',
+	r.fi_edo_id as 'Estado ID Nacimiento',
+	loc.fc_loc_edo_desc as 'Estado Nacimiento',
+	r.fi_mpio_id as 'Municipio ID Nacimiento',
+	loc.fc_loc_mpio_desc as 'Municipio Nacimiento',
+	r.fi_mpio_ofi_id as 'Municipio ID Oficialia',
+	ctMpio.fc_mpio_desc as 'Municipio Oficialia',
+	r.fi_oficialia_id as 'Oficialia ID'
+	FROM @vtRegistros r 
+	OUTER APPLY
+    (
+        SELECT TOP 1 *
+        FROM SDB.CTLocalidad ctloc 
+        WHERE ctloc.fi_loc_edo_id = r.fi_edo_id and ctloc.fi_loc_mpio_id = r.fi_mpio_id
+    ) loc
+	left JOIN SDB.CTMunicipio ctMpio on ctMpio.fi_mpio_id = r.fi_mpio_ofi_id
+	WHERE r.fi_estatus_registro_id = @CONST_REGISTRADO_FOLIO_SINAC_ID
+
+	--'PorFecha',
+	SELECT 
+	r.fc_folio_certificado as 'Folio SIC',
+	r.fc_folio_certificado_sinac as 'Folio SINAC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 105) as 'Fecha Nacimiento SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento_sinac, 105)  as 'Fecha Nacimiento SINAC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_registro, 105) as 'Fecha Registro SIC',
+	r.fi_edo_id as 'Estado ID Nacimiento',
+	loc.fc_loc_edo_desc as 'Estado Nacimiento',
+	r.fi_mpio_id as 'Municipio ID Nacimiento',
+	loc.fc_loc_mpio_desc as 'Municipio Nacimiento',
+	r.fi_mpio_ofi_id as 'Municipio ID Oficialia',
+	ctMpio.fc_mpio_desc as 'Municipio Oficialia',
+	r.fi_oficialia_id as 'Oficialia ID'
+	FROM @vtRegistros r 
+	OUTER APPLY
+    (
+        SELECT TOP 1 *
+        FROM SDB.CTLocalidad ctloc 
+        WHERE ctloc.fi_loc_edo_id = r.fi_edo_id and ctloc.fi_loc_mpio_id = r.fi_mpio_id
+    ) loc
+	left JOIN SDB.CTMunicipio ctMpio on ctMpio.fi_mpio_id = r.fi_mpio_ofi_id
+	WHERE r.fi_estatus_registro_id = @CONST_REGISTRADO_FECHA_SINAC_ID
+
+	--'Duplicados'
+	SELECT
+	r.fc_folio_certificado as 'Folio SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 105) as 'Fecha Nacimiento SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_registro, 105) as 'Fecha Registro SIC',
+	r.fi_edo_id as 'Estado ID Nacimiento',
+	loc.fc_loc_edo_desc as 'Estado Nacimiento',
+	r.fi_mpio_id as 'Municipio ID Nacimiento',
+	loc.fc_loc_mpio_desc as 'Municipio Nacimiento',
+	r.fi_mpio_ofi_id as 'Municipio ID Oficialia',
+	ctMpio.fc_mpio_desc as 'Municipio Oficialia',
+	r.fi_oficialia_id as 'Oficialia ID'
+	FROM @vtRegistros r 
+	OUTER APPLY
+    (
+        SELECT TOP 1 *
+        FROM SDB.CTLocalidad ctloc 
+        WHERE ctloc.fi_loc_edo_id = r.fi_edo_id and ctloc.fi_loc_mpio_id = r.fi_mpio_id
+    ) loc
+	left JOIN SDB.CTMunicipio ctMpio on ctMpio.fi_mpio_id = r.fi_mpio_ofi_id 
+	WHERE r.fi_estatus_registro_id = @CONST_DUPLICADO_ID
+
+	--SinSINAC
+	SELECT
+	r.fc_folio_certificado as 'Folio SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 105) as 'Fecha Nacimiento SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_registro, 105) as 'Fecha Registro SIC',
+	r.fi_edo_id as 'Estado ID Nacimiento',
+	loc.fc_loc_edo_desc as 'Estado Nacimiento',
+	r.fi_mpio_id as 'Municipio ID Nacimiento',
+	loc.fc_loc_mpio_desc as 'Municipio Nacimiento',
+	r.fi_mpio_ofi_id as 'Municipio ID Oficialia',
+	ctMpio.fc_mpio_desc as 'Municipio Oficialia',
+	r.fi_oficialia_id as 'Oficialia ID'
+	FROM @vtRegistros r 
+	OUTER APPLY
+    (
+        SELECT TOP 1 *
+        FROM SDB.CTLocalidad ctloc 
+        WHERE ctloc.fi_loc_edo_id = r.fi_edo_id and ctloc.fi_loc_mpio_id = r.fi_mpio_id
+    ) loc
+	left JOIN SDB.CTMunicipio ctMpio on ctMpio.fi_mpio_id = r.fi_mpio_ofi_id
+	WHERE r.fi_estatus_registro_id = @CONST_NOREGISTRADO_SINAC_ID
+	
 	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
 
 END TRY
@@ -432,12 +623,12 @@ AS
 
 BEGIN TRY		
 
-	SELECT  IdMun as 'IDA0Municipio',Municipio,ISNULL([1],0) as 'TotalA0Subregistro',ISNULL([2],0) as 'TotalA0RegistroA0Oportuno',ISNULL([3],0)  as 'TotalA0RegistroA0Extemporaneo'
+	SELECT  fi_ma_dom_mpio_id as 'IDA0Municipio',Municipio,ISNULL([1],0) as 'TotalA0Subregistro',ISNULL([2],0) as 'TotalA0RegistroA0Oportuno',ISNULL([3],0)  as 'TotalA0RegistroA0Extemporaneo'
 	FROM    (	
-	SELECT vt.fi_rn_mpio_id As IdMun,ctM.fc_mpio_desc AS Municipio, vt.fi_estatus_registro_id as IdGrupo,count(vt.fi_estatus_registro_id) as Total
+	SELECT vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc AS Municipio, vt.fi_estatus_registro_id as IdGrupo,count(vt.fi_estatus_registro_id) as Total
 	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
-	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id	
-	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_estatus_registro_id
+	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_ma_dom_mpio_id = ctM.fi_mpio_id	
+	GROUP BY vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_estatus_registro_id
 	)s
 	PIVOT   (SUM(Total) FOR IdGrupo IN ([1] ,[2], [3])) pvt	
 	FOR XML PATH('Fila'), ROOT('Reporte')
@@ -486,12 +677,12 @@ AS
 
 BEGIN TRY		
 
-	SELECT  fi_rn_mpio_id As IdMunicipio,Municipio,ISNULL([1],0) as 'TotalSubregistro',ISNULL([2],0) as 'TotalRegistroOportuno',ISNULL([3],0)  as 'TotalRegistroExtemporaneo'
+	SELECT  fi_ma_dom_mpio_id As IdMunicipio,fc_mpio_desc as MpioDesc,ISNULL([1],0) as 'TotalSubregistro',ISNULL([2],0) as 'TotalRegistroOportuno',ISNULL([3],0)  as 'TotalRegistroExtemporaneo'
 	FROM    (	
-	SELECT vt.fi_rn_mpio_id,ctM.fc_mpio_desc AS Municipio, vt.fi_estatus_registro_id as IdGrupo,count(vt.fi_estatus_registro_id) as Total
+	SELECT vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc, vt.fi_estatus_registro_id as IdGrupo,count(vt.fi_estatus_registro_id) as Total
 	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
-	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id	
-	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_estatus_registro_id
+	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_ma_dom_mpio_id = ctM.fi_mpio_id	
+	GROUP BY vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_estatus_registro_id
 	)s
 	PIVOT   (SUM(Total) FOR IdGrupo IN ([1] ,[2], [3])) pvt	
 	
@@ -553,7 +744,7 @@ BEGIN TRY
 	  WHERE 
 	  (@pc_anos IS NULL OR (@pc_anos IS NOT NULL AND YEAR(fd_rn_fecha_hora_nacimiento) IN (SELECT A.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_anos) A)))
 		AND (@pc_meses IS NULL OR (@pc_meses IS NOT NULL AND MONTH(fd_rn_fecha_hora_nacimiento) IN (SELECT M.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_meses) M)))
-		AND (@pc_municipios IS NULL OR (fi_rn_edo_id = @CONST_COAHUILA_EDO_ID AND fi_rn_mpio_id IN(SELECT Mun.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_municipios) Mun)))
+		AND (@pc_municipios IS NULL OR (fi_rn_mpio_id IN(SELECT Mun.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_municipios) Mun)))
 	  ) AS x order by fi_ma_edad asc;
 	SET @sql = N'
 	DECLARE 
@@ -576,14 +767,14 @@ BEGIN TRY
 		SET @sql = @sql + ' SET @vc_municipios =''' + @pc_municipios + ''''
 	END
 
-	SET @sql = @sql + '	SELECT fi_rn_mpio_id as ''ID Municipio'',Municipio,' + STUFF(@colNombre, 1, 2, '') + '
+	SET @sql = @sql + '	SELECT fi_ma_dom_mpio_id as ''ID Municipio'',Municipio,' + STUFF(@colNombre, 1, 2, '') + '
 	FROM
 	(
-		SELECT vt.fi_rn_mpio_id,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_edad AS Edad,count(vt.fi_ma_edad) as Total
+		SELECT vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_edad AS Edad,count(vt.fi_ma_edad) as Total
 		FROM SDB.FNObtieneTablaSubregistro(@vc_anos,@vc_meses,@vc_municipios) vt 
-		INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id
+		INNER JOIN SDB.CTMunicipio ctM ON vt.fi_ma_dom_mpio_id = ctM.fi_mpio_id
 		WHERE vt.fi_estatus_registro_id = 1
-		GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_edad
+		GROUP BY vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_edad
 	) AS j
 	PIVOT
 	(
@@ -615,14 +806,14 @@ BEGIN TRY
 		SET @sql = @sql + ' SET @vc_municipios =''' + @pc_municipios + ''''
 	END
 
-	SET @sql = @sql + '	SELECT fi_rn_mpio_id as ''ID Municipio'',Municipio,' + STUFF(@colNombre, 1, 2, '') + '
+	SET @sql = @sql + '	SELECT fi_ma_dom_mpio_id as ''ID Municipio'',Municipio,' + STUFF(@colNombre, 1, 2, '') + '
 	FROM
 	(
-		SELECT vt.fi_rn_mpio_id,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_edad AS Edad,count(vt.fi_ma_edad) as Total
+		SELECT vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_edad AS Edad,count(vt.fi_ma_edad) as Total
 		FROM SDB.FNObtieneTablaSubregistro(@vc_anos,@vc_meses,@vc_municipios) vt 
-		INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id
+		INNER JOIN SDB.CTMunicipio ctM ON vt.fi_ma_dom_mpio_id = ctM.fi_mpio_id
 		WHERE vt.fi_estatus_registro_id = 2
-		GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_edad
+		GROUP BY vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_edad
 	) AS j
 	PIVOT
 	(
@@ -654,14 +845,14 @@ BEGIN TRY
 		SET @sql = @sql + ' SET @vc_municipios =''' + @pc_municipios + ''''
 	END
 
-	SET @sql = @sql + '	SELECT fi_rn_mpio_id as ''ID Municipio'',Municipio,' + STUFF(@colNombre, 1, 2, '') + '
+	SET @sql = @sql + '	SELECT fi_ma_dom_mpio_id as ''ID Municipio'',Municipio,' + STUFF(@colNombre, 1, 2, '') + '
 	FROM
 	(
-		SELECT vt.fi_rn_mpio_id,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_edad AS Edad,count(vt.fi_ma_edad) as Total
+		SELECT vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_edad AS Edad,count(vt.fi_ma_edad) as Total
 		FROM SDB.FNObtieneTablaSubregistro(@vc_anos,@vc_meses,@vc_municipios) vt 
-		INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id
+		INNER JOIN SDB.CTMunicipio ctM ON vt.fi_ma_dom_mpio_id = ctM.fi_mpio_id
 		WHERE vt.fi_estatus_registro_id = 3
-		GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_edad
+		GROUP BY vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_edad
 	) AS j
 	PIVOT
 	(
@@ -714,34 +905,34 @@ AS
 
 BEGIN TRY		
 	
-	SELECT  fi_rn_mpio_id as 'ID Municipio',fc_mpio_desc AS Municipio,ISNULL([1],0) as NINGUNA,ISNULL([2],0) as 'PRIMARIA INCOMPLETA',ISNULL([3],0) as 'PRIMARIA COMPLETA',ISNULL([4],0) as 'SECUNDARIA INCOMPLETA',ISNULL([5],0) as 'SECUNDARIA COMPLETA',ISNULL([6],0) as 'BACHILLERATO O PREPARATORIA INCOMPLETA',ISNULL([7],0) as 'BACHILLERATO O PREPARATORIA COMPLETA',ISNULL([8],0) as 'PROFESIONAL',ISNULL([10],0) as 'POSGRADO',ISNULL([11],0) as 'PROFESIONAL INCOMPLETO',ISNULL([12],0) as 'POSGRADO INCOMPLETO',ISNULL([88],0) as 'N.E.',ISNULL([99],0) as 'S.I.'
+	SELECT  fi_ma_dom_mpio_id as 'ID Municipio',fc_mpio_desc AS Municipio,ISNULL([1],0) as NINGUNA,ISNULL([2],0) as 'PRIMARIA INCOMPLETA',ISNULL([3],0) as 'PRIMARIA COMPLETA',ISNULL([4],0) as 'SECUNDARIA INCOMPLETA',ISNULL([5],0) as 'SECUNDARIA COMPLETA',ISNULL([6],0) as 'BACHILLERATO O PREPARATORIA INCOMPLETA',ISNULL([7],0) as 'BACHILLERATO O PREPARATORIA COMPLETA',ISNULL([8],0) as 'PROFESIONAL',ISNULL([10],0) as 'POSGRADO',ISNULL([11],0) as 'PROFESIONAL INCOMPLETO',ISNULL([12],0) as 'POSGRADO INCOMPLETO',ISNULL([88],0) as 'N.E.',ISNULL([99],0) as 'S.I.'
 	--SELECT  fi_rn_mpio_id as 'ID Municipio',fc_mpio_desc AS Municipio,[1] as NINGUNA,[2] as 'PRIMARIA INCOMPLETA',[3] as 'PRIMARIA COMPLETA',[4] as 'SECUNDARIA INCOMPLETA',[5] as 'SECUNDARIA COMPLETA',[6] as 'BACHILLERATO O PREPARATORIA INCOMPLETA',[7] as 'BACHILLERATO O PREPARATORIA COMPLETA',[8] as 'PROFESIONAL',[10] as 'POSGRADO',[11] as 'PROFESIONAL INCOMPLETO',[12] as 'POSGRADO INCOMPLETO',[88] as 'N.E.',[99] as 'S.I.'
 	FROM    (	
-	SELECT vt.fi_rn_mpio_id,ctM.fc_mpio_desc, vt.fi_ma_escol_id,count(vt.fi_ma_escol_id) as Total
+	SELECT vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc, vt.fi_ma_escol_id,count(vt.fi_ma_escol_id) as Total
 	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
-	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id	
+	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_ma_dom_mpio_id = ctM.fi_mpio_id	
 	WHERE vt.fi_estatus_registro_id = 1
-	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_escol_id
+	GROUP BY vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_escol_id
 	)s
 	PIVOT   (SUM(Total) FOR fi_ma_escol_id IN ([1] ,[2], [3], [4], [5], [6], [7], [8], [10], [11], [12], [88], [99])) pvt	
 
-	SELECT  fi_rn_mpio_id as 'ID Municipio',fc_mpio_desc AS Municipio,ISNULL([1],0) as NINGUNA,ISNULL([2],0) as 'PRIMARIA INCOMPLETA',ISNULL([3],0) as 'PRIMARIA COMPLETA',ISNULL([4],0) as 'SECUNDARIA INCOMPLETA',ISNULL([5],0) as 'SECUNDARIA COMPLETA',ISNULL([6],0) as 'BACHILLERATO O PREPARATORIA INCOMPLETA',ISNULL([7],0) as 'BACHILLERATO O PREPARATORIA COMPLETA',ISNULL([8],0) as 'PROFESIONAL',ISNULL([10],0) as 'POSGRADO',ISNULL([11],0) as 'PROFESIONAL INCOMPLETO',ISNULL([12],0) as 'POSGRADO INCOMPLETO',ISNULL([88],0) as 'N.E.',ISNULL([99],0) as 'S.I.'
+	SELECT  fi_ma_dom_mpio_id as 'ID Municipio',fc_mpio_desc AS Municipio,ISNULL([1],0) as NINGUNA,ISNULL([2],0) as 'PRIMARIA INCOMPLETA',ISNULL([3],0) as 'PRIMARIA COMPLETA',ISNULL([4],0) as 'SECUNDARIA INCOMPLETA',ISNULL([5],0) as 'SECUNDARIA COMPLETA',ISNULL([6],0) as 'BACHILLERATO O PREPARATORIA INCOMPLETA',ISNULL([7],0) as 'BACHILLERATO O PREPARATORIA COMPLETA',ISNULL([8],0) as 'PROFESIONAL',ISNULL([10],0) as 'POSGRADO',ISNULL([11],0) as 'PROFESIONAL INCOMPLETO',ISNULL([12],0) as 'POSGRADO INCOMPLETO',ISNULL([88],0) as 'N.E.',ISNULL([99],0) as 'S.I.'
 	FROM    (	
-	SELECT vt.fi_rn_mpio_id,ctM.fc_mpio_desc, vt.fi_ma_escol_id,count(vt.fi_ma_escol_id) as Total
+	SELECT vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc, vt.fi_ma_escol_id,count(vt.fi_ma_escol_id) as Total
 	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
-	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id	
+	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_ma_dom_mpio_id = ctM.fi_mpio_id	
 	WHERE vt.fi_estatus_registro_id = 2
-	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_escol_id
+	GROUP BY vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_escol_id
 	)s
 	PIVOT   (SUM(Total) FOR fi_ma_escol_id IN ([1] ,[2], [3], [4], [5], [6], [7], [8], [10], [11], [12], [88], [99])) pvt	
 
-	SELECT  fi_rn_mpio_id as 'ID Municipio',fc_mpio_desc AS Municipio,ISNULL([1],0) as NINGUNA,ISNULL([2],0) as 'PRIMARIA INCOMPLETA',ISNULL([3],0) as 'PRIMARIA COMPLETA',ISNULL([4],0) as 'SECUNDARIA INCOMPLETA',ISNULL([5],0) as 'SECUNDARIA COMPLETA',ISNULL([6],0) as 'BACHILLERATO O PREPARATORIA INCOMPLETA',ISNULL([7],0) as 'BACHILLERATO O PREPARATORIA COMPLETA',ISNULL([8],0) as 'PROFESIONAL',ISNULL([10],0) as 'POSGRADO',ISNULL([11],0) as 'PROFESIONAL INCOMPLETO',ISNULL([12],0) as 'POSGRADO INCOMPLETO',ISNULL([88],0) as 'N.E.',ISNULL([99],0) as 'S.I.'
+	SELECT  fi_ma_dom_mpio_id as 'ID Municipio',fc_mpio_desc AS Municipio,ISNULL([1],0) as NINGUNA,ISNULL([2],0) as 'PRIMARIA INCOMPLETA',ISNULL([3],0) as 'PRIMARIA COMPLETA',ISNULL([4],0) as 'SECUNDARIA INCOMPLETA',ISNULL([5],0) as 'SECUNDARIA COMPLETA',ISNULL([6],0) as 'BACHILLERATO O PREPARATORIA INCOMPLETA',ISNULL([7],0) as 'BACHILLERATO O PREPARATORIA COMPLETA',ISNULL([8],0) as 'PROFESIONAL',ISNULL([10],0) as 'POSGRADO',ISNULL([11],0) as 'PROFESIONAL INCOMPLETO',ISNULL([12],0) as 'POSGRADO INCOMPLETO',ISNULL([88],0) as 'N.E.',ISNULL([99],0) as 'S.I.'
 	FROM    (	
-	SELECT vt.fi_rn_mpio_id,ctM.fc_mpio_desc, vt.fi_ma_escol_id,count(vt.fi_ma_escol_id) as Total
+	SELECT vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc, vt.fi_ma_escol_id,count(vt.fi_ma_escol_id) as Total
 	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
-	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id	
+	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_ma_dom_mpio_id = ctM.fi_mpio_id	
 	WHERE vt.fi_estatus_registro_id = 3
-	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_escol_id
+	GROUP BY vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_escol_id
 	)s
 	PIVOT   (SUM(Total) FOR fi_ma_escol_id IN ([1] ,[2], [3], [4], [5], [6], [7], [8], [10], [11], [12], [88], [99])) pvt	
 	
@@ -787,34 +978,34 @@ AS
 
 BEGIN TRY		
 	
-	SELECT  fi_rn_mpio_id as 'ID Municipio',fc_mpio_desc AS Municipio,ISNULL([1],0) as 'Hombre',ISNULL([2],0) as 'Mujer',ISNULL([3],0)  as 'Sin Información'
+	SELECT  fi_ma_dom_mpio_id as 'ID Municipio',fc_mpio_desc AS Municipio,ISNULL([1],0) as 'Hombre',ISNULL([2],0) as 'Mujer',ISNULL([3],0)  as 'Sin Información'
 	FROM    (	
-	SELECT vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_rn_sexo_id,count(vt.fi_rn_sexo_id) as Total
+	SELECT vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_rn_sexo_id,count(vt.fi_rn_sexo_id) as Total
 	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
-	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id
+	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_ma_dom_mpio_id = ctM.fi_mpio_id
 	WHERE vt.fi_estatus_registro_id = 1	
-	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_rn_sexo_id
+	GROUP BY vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_rn_sexo_id
 	)s
 	PIVOT   (SUM(Total) FOR fi_rn_sexo_id IN ([1] ,[2], [3])) pvt	
 
-	SELECT  fi_rn_mpio_id as 'ID Municipio',fc_mpio_desc AS Municipio,ISNULL([1],0) as 'Hombre',ISNULL([2],0) as 'Mujer',ISNULL([3],0)  as 'Sin Información'
+	SELECT  fi_ma_dom_mpio_id as 'ID Municipio',fc_mpio_desc AS Municipio,ISNULL([1],0) as 'Hombre',ISNULL([2],0) as 'Mujer',ISNULL([3],0)  as 'Sin Información'
 	FROM    (	
-	SELECT vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_rn_sexo_id,count(vt.fi_rn_sexo_id) as Total
+	SELECT vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_rn_sexo_id,count(vt.fi_rn_sexo_id) as Total
 	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
-	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id
+	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_ma_dom_mpio_id = ctM.fi_mpio_id
 	WHERE vt.fi_estatus_registro_id = 2	
-	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_rn_sexo_id
+	GROUP BY vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_rn_sexo_id
 	)s
 	PIVOT   (SUM(Total) FOR fi_rn_sexo_id IN ([1] ,[2], [3])) pvt	
 	
 
-	SELECT  fi_rn_mpio_id as 'ID Municipio' ,fc_mpio_desc AS Municipio,ISNULL([1],0) as 'Hombre',ISNULL([2],0) as 'Mujer',ISNULL([3],0)  as 'Sin Información'
+	SELECT  fi_ma_dom_mpio_id as 'ID Municipio' ,fc_mpio_desc AS Municipio,ISNULL([1],0) as 'Hombre',ISNULL([2],0) as 'Mujer',ISNULL([3],0)  as 'Sin Información'
 	FROM    (	
-	SELECT vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_rn_sexo_id,count(vt.fi_rn_sexo_id) as Total
+	SELECT vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_rn_sexo_id,count(vt.fi_rn_sexo_id) as Total
 	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
-	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id
+	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_ma_dom_mpio_id = ctM.fi_mpio_id
 	WHERE vt.fi_estatus_registro_id = 3	
-	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_rn_sexo_id
+	GROUP BY vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_rn_sexo_id
 	)s
 	PIVOT   (SUM(Total) FOR fi_rn_sexo_id IN ([1] ,[2], [3])) pvt
 		
@@ -861,33 +1052,33 @@ AS
 BEGIN TRY		
 	--SELECT fi_edo_civil_id,fc_edo_civil_desc FROM SDB.CTEdoCivil
 
-	SELECT  fi_rn_mpio_id as 'ID Municipio',Municipio,ISNULL([11],0) as CASADA,ISNULL([12],0) as SOLTERA,ISNULL([13],0) as DIVORCIADA,ISNULL([14],0) as VIUDA,ISNULL([15],0) as 'UNIÓN LIBRE',ISNULL([16],0) as SEPARADA,ISNULL([88],0) as 'N.E.',ISNULL([99],0) as 'S.I.'
+	SELECT  fi_ma_dom_mpio_id as 'ID Municipio',Municipio,ISNULL([11],0) as CASADA,ISNULL([12],0) as SOLTERA,ISNULL([13],0) as DIVORCIADA,ISNULL([14],0) as VIUDA,ISNULL([15],0) as 'UNIÓN LIBRE',ISNULL([16],0) as SEPARADA,ISNULL([88],0) as 'N.E.',ISNULL([99],0) as 'S.I.'
 	FROM    (	
-	SELECT vt.fi_rn_mpio_id,ctM.fc_mpio_desc AS Municipio, vt.fi_ma_edo_civil_id as IdEdoCivil,count(vt.fi_ma_edo_civil_id) as Total
+	SELECT vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc AS Municipio, vt.fi_ma_edo_civil_id as IdEdoCivil,count(vt.fi_ma_edo_civil_id) as Total
 	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
-	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id	
+	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_ma_dom_mpio_id = ctM.fi_mpio_id	
 	WHERE vt.fi_estatus_registro_id = 1
-	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_edo_civil_id
+	GROUP BY vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_edo_civil_id
 	)s
 	PIVOT   (SUM(Total) FOR IdEdoCivil IN ([11] ,[12], [13], [14], [15], [16], [88], [99])) pvt	
 
-	SELECT  fi_rn_mpio_id as 'ID Municipio',Municipio,ISNULL([11],0) as CASADA,ISNULL([12],0) as SOLTERA,ISNULL([13],0) as DIVORCIADA,ISNULL([14],0) as VIUDA,ISNULL([15],0) as 'UNIÓN LIBRE',ISNULL([16],0) as SEPARADA,ISNULL([88],0) as 'N.E.',ISNULL([99],0) as 'S.I.'
+	SELECT  fi_ma_dom_mpio_id as 'ID Municipio',Municipio,ISNULL([11],0) as CASADA,ISNULL([12],0) as SOLTERA,ISNULL([13],0) as DIVORCIADA,ISNULL([14],0) as VIUDA,ISNULL([15],0) as 'UNIÓN LIBRE',ISNULL([16],0) as SEPARADA,ISNULL([88],0) as 'N.E.',ISNULL([99],0) as 'S.I.'
 	FROM    (	
-	SELECT vt.fi_rn_mpio_id,ctM.fc_mpio_desc AS Municipio, vt.fi_ma_edo_civil_id as IdEdoCivil,count(vt.fi_ma_edo_civil_id) as Total
+	SELECT vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc AS Municipio, vt.fi_ma_edo_civil_id as IdEdoCivil,count(vt.fi_ma_edo_civil_id) as Total
 	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
-	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id	
+	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_ma_dom_mpio_id = ctM.fi_mpio_id	
 	WHERE vt.fi_estatus_registro_id = 2
-	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_edo_civil_id
+	GROUP BY vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_edo_civil_id
 	)s
 	PIVOT   (SUM(Total) FOR IdEdoCivil IN ([11] ,[12], [13], [14], [15], [16], [88], [99])) pvt	
 
-	SELECT  fi_rn_mpio_id as 'ID Municipio',Municipio,ISNULL([11],0) as CASADA,ISNULL([12],0) as SOLTERA,ISNULL([13],0) as DIVORCIADA,ISNULL([14],0) as VIUDA,ISNULL([15],0) as 'UNIÓN LIBRE',ISNULL([16],0) as SEPARADA,ISNULL([88],0) as 'N.E.',ISNULL([99],0) as 'S.I.'
+	SELECT  fi_ma_dom_mpio_id as 'ID Municipio',Municipio,ISNULL([11],0) as CASADA,ISNULL([12],0) as SOLTERA,ISNULL([13],0) as DIVORCIADA,ISNULL([14],0) as VIUDA,ISNULL([15],0) as 'UNIÓN LIBRE',ISNULL([16],0) as SEPARADA,ISNULL([88],0) as 'N.E.',ISNULL([99],0) as 'S.I.'
 	FROM    (	
-	SELECT vt.fi_rn_mpio_id,ctM.fc_mpio_desc AS Municipio, vt.fi_ma_edo_civil_id as IdEdoCivil,count(vt.fi_ma_edo_civil_id) as Total
+	SELECT vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc AS Municipio, vt.fi_ma_edo_civil_id as IdEdoCivil,count(vt.fi_ma_edo_civil_id) as Total
 	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
-	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id	
+	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_ma_dom_mpio_id = ctM.fi_mpio_id	
 	WHERE vt.fi_estatus_registro_id = 3
-	GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_edo_civil_id
+	GROUP BY vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_edo_civil_id
 	)s
 	PIVOT   (SUM(Total) FOR IdEdoCivil IN ([11] ,[12], [13], [14], [15], [16], [88], [99])) pvt	
 	--FOR XML PATH('Fila'), ROOT('Reporte')
@@ -949,7 +1140,7 @@ BEGIN TRY
 	  WHERE 
 	  (@pc_anos IS NULL OR (@pc_anos IS NOT NULL AND YEAR(fd_rn_fecha_hora_nacimiento) IN (SELECT A.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_anos) A)))
 		AND (@pc_meses IS NULL OR (@pc_meses IS NOT NULL AND MONTH(fd_rn_fecha_hora_nacimiento) IN (SELECT M.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_meses) M)))
-		AND (@pc_municipios IS NULL OR (fi_rn_edo_id = @CONST_COAHUILA_EDO_ID AND fi_rn_mpio_id IN(SELECT Mun.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_municipios) Mun)))
+		AND (@pc_municipios IS NULL OR (fi_rn_mpio_id IN(SELECT Mun.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_municipios) Mun)))
 	  ) AS x order by fi_ma_num_nacimiento asc;
 	SET @sql = N'
 	DECLARE 
@@ -972,14 +1163,14 @@ BEGIN TRY
 		SET @sql = @sql + ' SET @vc_municipios =''' + @pc_municipios + ''''
 	END
 
-	SET @sql = @sql + '	SELECT fi_rn_mpio_id as ''ID Municipio'',Municipio,' + STUFF(@colNombre, 1, 2, '') + '
+	SET @sql = @sql + '	SELECT fi_ma_dom_mpio_id as ''ID Municipio'',Municipio,' + STUFF(@colNombre, 1, 2, '') + '
 	FROM
 	(
-		SELECT vt.fi_rn_mpio_id,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_num_nacimiento AS NumNac,count(vt.fi_ma_num_nacimiento) as Total
+		SELECT vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_num_nacimiento AS NumNac,count(vt.fi_ma_num_nacimiento) as Total
 		FROM SDB.FNObtieneTablaSubregistro(@vc_anos,@vc_meses,@vc_municipios) vt 
-		INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id
+		INNER JOIN SDB.CTMunicipio ctM ON vt.fi_ma_dom_mpio_id = ctM.fi_mpio_id
 		WHERE vt.fi_estatus_registro_id = 1
-		GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_num_nacimiento
+		GROUP BY vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_num_nacimiento
 	) AS j
 	PIVOT
 	(
@@ -1012,14 +1203,14 @@ BEGIN TRY
 		SET @sql = @sql + ' SET @vc_municipios =''' + @pc_municipios + ''''
 	END
 
-	SET @sql = @sql + '	SELECT fi_rn_mpio_id as ''ID Municipio'',Municipio,' + STUFF(@colNombre, 1, 2, '') + '
+	SET @sql = @sql + '	SELECT fi_ma_dom_mpio_id as ''ID Municipio'',Municipio,' + STUFF(@colNombre, 1, 2, '') + '
 	FROM
 	(
-		SELECT vt.fi_rn_mpio_id,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_num_nacimiento AS NumNac,count(vt.fi_ma_num_nacimiento) as Total
+		SELECT vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_num_nacimiento AS NumNac,count(vt.fi_ma_num_nacimiento) as Total
 		FROM SDB.FNObtieneTablaSubregistro(@vc_anos,@vc_meses,@vc_municipios) vt 
-		INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id
+		INNER JOIN SDB.CTMunicipio ctM ON vt.fi_ma_dom_mpio_id = ctM.fi_mpio_id
 		WHERE vt.fi_estatus_registro_id = 2
-		GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_num_nacimiento
+		GROUP BY vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_num_nacimiento
 	) AS j
 	PIVOT
 	(
@@ -1052,14 +1243,14 @@ BEGIN TRY
 		SET @sql = @sql + ' SET @vc_municipios =''' + @pc_municipios + ''''
 	END
 
-	SET @sql = @sql + '	SELECT fi_rn_mpio_id as ''ID Municipio'',Municipio,' + STUFF(@colNombre, 1, 2, '') + '
+	SET @sql = @sql + '	SELECT fi_ma_dom_mpio_id as ''ID Municipio'',Municipio,' + STUFF(@colNombre, 1, 2, '') + '
 	FROM
 	(
-		SELECT vt.fi_rn_mpio_id,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_num_nacimiento AS NumNac,count(vt.fi_ma_num_nacimiento) as Total
+		SELECT vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc AS Municipio,vt.fi_ma_num_nacimiento AS NumNac,count(vt.fi_ma_num_nacimiento) as Total
 		FROM SDB.FNObtieneTablaSubregistro(@vc_anos,@vc_meses,@vc_municipios) vt 
-		INNER JOIN SDB.CTMunicipio ctM ON vt.fi_rn_mpio_id = ctM.fi_mpio_id
+		INNER JOIN SDB.CTMunicipio ctM ON vt.fi_ma_dom_mpio_id = ctM.fi_mpio_id
 		WHERE vt.fi_estatus_registro_id = 3
-		GROUP BY vt.fi_rn_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_num_nacimiento
+		GROUP BY vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_ma_num_nacimiento
 	) AS j
 	PIVOT
 	(

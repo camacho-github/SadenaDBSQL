@@ -332,134 +332,42 @@ ERROR:
 	RETURN -1      
  GO
 
-
-IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRNIniciarSesion') AND SysStat & 0xf = 4)
+ IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSCTRol') AND SysStat & 0xf = 4)
 BEGIN
-	DROP PROC SDB.PRNIniciarSesion
+	DROP PROC SDB.PRSCTRol
 END
 GO
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  
---- Descripcion: Creación de un stored procedure que valida e inicia la sesión de un usuario
+--- Descripcion: Creación de un stored procedure que recupera el catálogo de roles
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
-CREATE PROCEDURE SDB.PRNIniciarSesion(
-	@pc_identificador varchar(60),
-	@pc_contrasena varchar(40),
-	@pc_ip varchar(31),
+CREATE PROCEDURE SDB.PRSCTRol(
 	@po_msg_code INT OUTPUT,
 	@po_msg	VARCHAR(255) OUTPUT)
 
-AS
-DECLARE
-	@vi_usuario_id int,
-	@vi_rol_id int,
-	@vi_estatus_id int,
-	@vi_sesion_id int
-	 
+AS 
 
 SET NOCOUNT ON
+
 BEGIN TRY	
-	IF EXISTS( SELECT fi_usuario_id FROM SDB.TAUsuario  WITH( NOLOCK ) WHERE fc_usuario = @pc_identificador and fc_contrasena =  @pc_contrasena AND fi_estatus_id = 1)
+	IF EXISTS( SELECT 1 FROM SDB.CTRol WITH( NOLOCK ))
 	BEGIN
-		SELECT @vi_usuario_id =fi_usuario_id, @vi_rol_id = fi_rol_id
-		   FROM SDB.TAUsuario WITH( NOLOCK ) where fc_usuario = @pc_identificador AND fi_estatus_id = 1
-
-		   print @vi_usuario_id + ' ' + @vi_rol_id
-	END
-	ELSE IF EXISTS( SELECT fi_usuario_id FROM SDB.TAUsuario  WITH( NOLOCK ) WHERE fc_correo_e = @pc_identificador and fc_contrasena =  @pc_contrasena AND fi_estatus_id = 1)
-	BEGIN		
-		SELECT @vi_usuario_id =fi_usuario_id, @vi_rol_id = fi_rol_id
-		   FROM SDB.TAUsuario WITH( NOLOCK ) where fc_correo_e = @pc_identificador AND fi_estatus_id = 1
-
-		   print @vi_usuario_id
-	END
-	
-	IF(@vi_rol_id = 2)
-	BEGIN
-		IF EXISTS(SELECT fi_sesion_id FROM SDB.BIUsuarioSesion WITH( NOLOCK ) WHERE fi_usuario_id = @vi_usuario_id AND fi_estatus_id = 1)
-		BEGIN
-			UPDATE SDB.BIUsuarioSesion SET fi_estatus_id = 2 ,fd_fecha_act = SYSDATETIME() WHERE fi_usuario_id = @vi_usuario_id AND fi_estatus_id = 1
-			INSERT INTO SDB.BIUsuarioSesion (fi_usuario_id,fc_ip,fi_estatus_id) values(@vi_usuario_id,@pc_ip,1)
-		END
-	END
-	IF NOT EXISTS(SELECT fi_sesion_id FROM SDB.BIUsuarioSesion WITH( NOLOCK ) WHERE fi_usuario_id = @vi_usuario_id AND fc_ip = @pc_ip AND fi_estatus_id = 1)
-	BEGIN
-		INSERT INTO SDB.BIUsuarioSesion (fi_usuario_id,fc_ip,fi_estatus_id) values(@vi_usuario_id,@pc_ip,1)
-	END		
-
-	IF (@vi_usuario_id > 0)
-	BEGIN 
-		SELECT @vi_sesion_id = fi_sesion_id FROM SDB.BIUsuarioSesion WITH( NOLOCK ) WHERE fi_usuario_id = @vi_usuario_id AND fc_ip = @pc_ip AND fi_estatus_id = 1
-
-		SELECT @vi_sesion_id as SesionId, U.fi_usuario_id as UsuarioId, U.fc_usuario as UsuarioDesc, U.fc_correo_e as CorreoE, U.fi_rol_id as RolId, R.fc_rol_desc as RolDesc
-		   FROM SDB.TAUsuario U  WITH( NOLOCK ) INNER JOIN SDB.CTRol R WITH( NOLOCK ) on U.fi_rol_id = R.fi_rol_id WHERE  U.fi_usuario_id = @vi_usuario_id
+		SELECT fi_rol_id as RolId, fc_rol_desc as RolDesc
+		   FROM SDB.CTRol
+		   WHERE fi_rol_id > 1
+		   ORDER BY 1 ASC
 
 		SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
 	END
 	ELSE
 	BEGIN
-		SELECT @po_msg_code=1, @po_msg = 'El usuario, la cuenta o la contraseña no es correcta'					
+		SELECT @po_msg_code=1, @po_msg = 'No se encontraron registros en el catálogo Rol'		
 	END
 END TRY
-BEGIN CATCH		
-		SELECT @po_msg_code=-1, @po_msg = ERROR_MESSAGE() + ' Error al consultar cuenta ' + @pc_identificador
-		GOTO ERROR
-END CATCH
-	
-SET NOCOUNT OFF
-RETURN 0      
-       
-ERROR:        
-	RAISERROR (@po_msg,18,1)      
-	SET NOCOUNT OFF        
-	RETURN -1      
- GO
-
-
-IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRNFinalizarSesion') AND SysStat & 0xf = 4)
-BEGIN
-	DROP PROC SDB.PRNFinalizarSesion
-END
-GO
-----------------------------------------------------------------------------------------------------------------------------------      
---- Responsable: Jorge Alberto de la Rosa  
---- Fecha      : Diciembre 2018  
---- Descripcion: Creación de un stored procedure que finaliza la sesión de un usuario
---- Aplicacion:  SADENADB  
-----------------------------------------------------------------------------------------------------------------------------------  
-CREATE PROCEDURE SDB.PRNFinalizarSesion(
-	@pi_sesion_id int,	
-	@po_msg_code INT OUTPUT,
-	@po_msg	VARCHAR(255) OUTPUT)
-
-AS
-DECLARE
-	@vi_usuario_id int	 
-
-SET NOCOUNT ON
-BEGIN TRY	
-	IF EXISTS( SELECT fi_usuario_id FROM SDB.BIUsuarioSesion  WITH( NOLOCK ) WHERE fi_sesion_id = @pi_sesion_id and fi_estatus_id =  1)
-	BEGIN
-		
-		SELECT @vi_usuario_id = fi_usuario_id
-		   FROM SDB.BIUsuarioSesion WITH( NOLOCK ) WHERE fi_sesion_id = @pi_sesion_id
-
-		UPDATE SDB.BIUsuarioSesion SET fi_estatus_id = 2 WHERE fi_sesion_id = @pi_sesion_id
-
-		SELECT @pi_sesion_id as SesionId, U.fi_usuario_id as UsuarioId, U.fc_usuario as UsuarioDesc, U.fc_correo_e as CorreoE, U.fi_rol_id as RolId, R.fc_rol_desc as RolDesc
-		   FROM SDB.TAUsuario U WITH( NOLOCK ) INNER JOIN SDB.CTRol R WITH( NOLOCK ) on U.fi_rol_id = R.fi_rol_id WHERE  U.fi_usuario_id = @vi_usuario_id
-
-		SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
-	END
-	ELSE
-	BEGIN
-		SELECT @po_msg_code=1, @po_msg = 'La sesión no existe o ya fue cerrada'		
-	END
-END TRY
-BEGIN CATCH		
-		SELECT @po_msg_code=-1, @po_msg = 'Error al actualizar la sesión ' + @pi_sesion_id
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar catálogo de Rol'
 		GOTO ERROR
 END CATCH
 	
@@ -471,52 +379,6 @@ ERROR:
 	SET NOCOUNT OFF        
 	RETURN -1      
  GO
-
-IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSSesionActiva') AND SysStat & 0xf = 4)
-BEGIN
-	DROP PROC SDB.PRSSesionActiva
-END
-GO
-----------------------------------------------------------------------------------------------------------------------------------      
---- Responsable: Jorge Alberto de la Rosa  
---- Fecha      : Diciembre 2018  
---- Descripcion: Creación de un stored procedure que consulta que una sesión se encuentre activa
---- Aplicacion:  SADENADB  
-----------------------------------------------------------------------------------------------------------------------------------  
-CREATE PROCEDURE SDB.PRSSesionActiva(
-	@pi_sesion_id int,	
-	@po_msg_code int OUTPUT,
-	@po_msg	varchar(255) OUTPUT)
-
-AS
-
-SET NOCOUNT ON
-BEGIN TRY	
-	IF EXISTS( SELECT fi_sesion_id FROM SDB.BIUsuarioSesion  WITH( NOLOCK ) WHERE fi_sesion_id = @pi_sesion_id and fi_estatus_id =  1)
-	BEGIN
-				
-		SELECT @po_msg_code=0, @po_msg = 'La sesión se encuentra activa'		
-	END
-	ELSE
-	BEGIN
-		SELECT @po_msg_code=1, @po_msg = 'La sesión no existe o ya fue cerrada'		
-	END
-END TRY
-BEGIN CATCH		
-		SELECT @po_msg_code=-1, @po_msg = 'Error al consultar la sesión' + @pi_sesion_id
-		GOTO ERROR
-END CATCH
-	
-SET NOCOUNT OFF
-RETURN 0        
-       
-ERROR:        
-	RAISERROR (@po_msg,18,1)      
-	SET NOCOUNT OFF        
-	RETURN -1      
- GO
-
-
 
 IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRDelTMSINAC') AND SysStat & 0xf = 4)
 BEGIN
@@ -598,63 +460,6 @@ ERROR:
 	SET NOCOUNT OFF        
 	RETURN -1      
  GO
-
---IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRNInsControlCarga') AND SysStat & 0xf = 4)
---BEGIN
---	DROP PROC SDB.PRNInsControlCarga
---END
---GO
-------------------------------------------------------------------------------------------------------------------------------------      
------ Responsable: Jorge Alberto de la Rosa  
------ Fecha      : Diciembre 2018  
------ Descripcion: Creación de un stored procedure que inserta en la tabla control de carga
------ Aplicacion:  SADENADB  
-------------------------------------------------------------------------------------------------------------------------------------  
---CREATE PROCEDURE SDB.PRNInsControlCarga(
---	@pi_sesion_id int,
---	@pi_control_tipo_id int,
---	@pc_ano varchar(4),
---	@pc_nombre_archivo varchar(255),
---	@po_msg_code int OUTPUT,
---	@po_msg	varchar(255) OUTPUT)
---AS
---	DECLARE 
---	@CONST_ESTATUS_CONTROL_PRECARGADO INT = 1,
---	@CONST_ESTATUS_CONTROL_PRECARGADO_ELIMINADO INT = 2,
---	@CONST_ESTATUS_CONTROL_PROCESADO INT = 3,
---	@CONST_ESTATUS_CONTROL_PROCESADO_ELIMINADO INT = 4
-
---SET NOCOUNT ON
---BEGIN TRY	
---	IF EXISTS( SELECT fi_sesion_id FROM SDB.BIUsuarioSesion  WITH( NOLOCK ) WHERE fi_sesion_id = @pi_sesion_id and fi_estatus_id =  1)
---	BEGIN
---		IF EXISTS( SELECT fi_control_tipo_id from SDB.TAControlCarga WITH( NOLOCK ) WHERE fi_control_tipo_id = @pi_control_tipo_id AND fi_estatus_control_id = @CONST_ESTATUS_CONTROL_PRECARGADO)
---		BEGIN
---			UPDATE SDB.TAControlCarga SET fi_estatus_control_id = @CONST_ESTATUS_CONTROL_PRECARGADO_ELIMINADO, fd_fecha_act = SYSDATETIME()  WHERE fi_control_tipo_id = @pi_control_tipo_id AND fi_estatus_control_id = @CONST_ESTATUS_CONTROL_PRECARGADO
---		END
-
---		INSERT INTO SDB.TAControlCarga(fi_sesion_id,fi_control_tipo_id,fc_ano,fc_nombre_archivo) VALUES( @pi_sesion_id,@pi_control_tipo_id,@pc_ano,@pc_nombre_archivo)		
-		
---		SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
---	END
---	ELSE
---	BEGIN
---		SELECT @po_msg_code=1, @po_msg = 'La sesión no existe o ya fue cerrada'		
---	END
---END TRY
---BEGIN CATCH		
---		SELECT @po_msg_code=-1, @po_msg = 'Error al insertar en tabla de control de carga' + @pi_sesion_id
---		GOTO ERROR
---END CATCH
-	
---SET NOCOUNT OFF
---RETURN 0        
-       
---ERROR:        
---	RAISERROR (@po_msg,18,1)      
---	SET NOCOUNT OFF        
---	RETURN -1      
--- GO
 
 
 IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRNInsControlCarga') AND SysStat & 0xf = 4)
@@ -919,24 +724,28 @@ CREATE PROCEDURE SDB.PRNProcesarCargaSIC(
 	@po_msg_code int OUTPUT,
 	@po_msg	varchar(255) OUTPUT)
 AS DECLARE
-	@vi_control_id int
+	@vi_control_id int,
+	@vc_ano varchar(4)
 		
 SET NOCOUNT ON
 BEGIN TRY	
 	IF EXISTS( SELECT fi_control_id FROM SDB.TAControlCarga  WITH( NOLOCK ) WHERE fi_control_tipo_id = 3 and fi_estatus_control_id = 1)
 	BEGIN
 		
-		SELECT @vi_control_id = fi_control_id FROM SDB.TAControlCarga  WITH( NOLOCK ) WHERE fi_control_tipo_id = 3 and fi_estatus_control_id = 1
+		SELECT @vi_control_id = fi_control_id,@vc_ano = fc_ano FROM SDB.TAControlCarga  WITH( NOLOCK ) WHERE fi_control_tipo_id = 3 and fi_estatus_control_id = 1
+		SELECT * FROM SDB.TAControlCarga  WITH( NOLOCK ) WHERE fi_control_tipo_id = 3 and fi_estatus_control_id = 1
 		
 		INSERT INTO SDB.TASIC(fc_identificador,fc_folio_certificado,fc_folio_simple_certificado, fi_control_id,
-		fi_edo_id,fi_mpio_id,fd_rn_fecha_hora_nacimiento,fd_rn_fecha_registro,fi_estatus_duplicado)
+		fi_edo_id,fi_mpio_id,fd_rn_fecha_hora_nacimiento,fd_rn_fecha_registro,fi_mpio_ofi_id,fi_oficialia_id,fi_estatus_duplicado)
 		SELECT CONCAT(fc_no_certif, fc_fecha_reg) ,fc_no_certif,SDB.FNConvierteNumero(fc_no_certif), @vi_control_id, 
 		fi_estado,fi_municipio,
 		--convert(datetime,SUBSTRING(ltrim(rtrim(fc_fecha_nac)),0,9) + ' ' + SUBSTRING(ltrim(rtrim(fc_fecha_nac)),10,5),3),
 		convert(datetime,fc_fecha_nac),
 		--convert(datetime,SUBSTRING(ltrim(rtrim(fc_fecha_reg)),0,9),3),0
-		convert(datetime,fc_fecha_reg),0					
+		convert(datetime,fc_fecha_reg),fi_mun_ofi,fi_oficialia,0					
 		FROM SDB.TMSIC
+		WHERE YEAR(convert(datetime,fc_fecha_nac)) >= '2015'
+		AND YEAR(convert(datetime,fc_fecha_reg)) = @vc_ano
 
 		----------------------------------------------------------------------------
 
@@ -967,6 +776,8 @@ ERROR:
 	SET NOCOUNT OFF        
 	RETURN -1      
  GO
+
+--exec SDB.PRNProcesarDuplicadosSIC 2,null,null
 
 IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRNProcesarDuplicadosSIC') AND SysStat & 0xf = 4)
 BEGIN
@@ -1028,7 +839,7 @@ BEGIN TRY
 		FROM @vtRegistrosDuplicados
 		WHERE fi_id_renglon = @vi_renglonId
 		
-		IF (@vc_folio_simple_certificado <> '0')
+		IF (@vc_folio_simple_certificado <> '0' and len(@vc_folio_simple_certificado) > 8 )
 		BEGIN			
 			UPDATE SDB.TASIC SET fi_estatus_duplicado = 1
 			WHERE fc_folio_simple_certificado = @vc_folio_simple_certificado

@@ -114,13 +114,13 @@ GO
 --- Descripcion: Creación de la llave foranea para la tabla oficialias
 --- Aplicacion:  SADENADB  
 ----------------------------------------------------------------------------------------------------------------------------------  
-IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.FK001TAOficinas'))
-BEGIN
-	ALTER TABLE SDB.TAOficinas 
-	ADD CONSTRAINT FK001TAOficinas 
-	FOREIGN KEY (fi_edo_id,fi_mpio_id,fi_loc_id) REFERENCES SDB.CTLocalidad(fi_loc_edo_id,fi_loc_mpio_id,fi_loc_id);  
-END
-GO 
+--IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.FK001TAOficinas'))
+--BEGIN
+--	ALTER TABLE SDB.TAOficinas 
+--	ADD CONSTRAINT FK001TAOficinas 
+--	FOREIGN KEY (fi_edo_id,fi_mpio_id,fi_loc_id) REFERENCES SDB.CTLocalidad(fi_loc_edo_id,fi_loc_mpio_id,fi_loc_id);  
+--END
+--GO 
 
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  

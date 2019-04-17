@@ -8,13 +8,14 @@ BEGIN TRY
 	--- Responsable: Jorge Alberto de la Rosa  
 	--- Fecha      : Diciembre 2018  
 	--- Descripcion: Creación de registros del catálogo de rol
-	--- Aplicacion:  SADENADB  
+	--- Aplicacion:  SADENADB
 	----------------------------------------------------------------------------------------------------------------------------------  
-	IF NOT EXISTS( SELECT fi_rol_id FROM SDB.CTRol WITH( NOLOCK ) WHERE fi_rol_id IN (1,2,3))
+	IF NOT EXISTS( SELECT fi_rol_id FROM SDB.CTRol WITH( NOLOCK ) WHERE fi_rol_id IN (0,1,2,3))
 	BEGIN
-		INSERT INTO SDB.CTRol(fi_rol_id,fc_rol_desc) VALUES(1,'Sistemas')
+		INSERT INTO SDB.CTRol(fi_rol_id,fc_rol_desc) VALUES(0,'Sistemas')
+		INSERT INTO SDB.CTRol(fi_rol_id,fc_rol_desc) VALUES(1,'Superadministrador')
 		INSERT INTO SDB.CTRol(fi_rol_id,fc_rol_desc) VALUES(2,'Administrador')
-		INSERT INTO SDB.CTRol(fi_rol_id,fc_rol_desc) VALUES(3,'Analista')
+		INSERT INTO SDB.CTRol(fi_rol_id,fc_rol_desc) VALUES(3,'Operador')
 	END
 
 
@@ -46,8 +47,11 @@ BEGIN TRY
 		INSERT INTO SDB.CTEstatusRegistro(fi_estatus_registro_id,fi_estatus_registro_desc) VALUES(02,'REGISTRO OPORTUNO')
 		INSERT INTO SDB.CTEstatusRegistro(fi_estatus_registro_id,fi_estatus_registro_desc) VALUES(03,'REGISTRO EXTEMPORANEO')
 		INSERT INTO SDB.CTEstatusRegistro(fi_estatus_registro_id,fi_estatus_registro_desc) VALUES(04,'SIC DUPLICADO')
+		INSERT INTO SDB.CTEstatusRegistro(fi_estatus_registro_id,fi_estatus_registro_desc) VALUES(05,'SIC NO REGISTRADO SINAC')
+		INSERT INTO SDB.CTEstatusRegistro(fi_estatus_registro_id,fi_estatus_registro_desc) VALUES(06,'SIC REGISTRO POR FOLIO SINAC')
+		INSERT INTO SDB.CTEstatusRegistro(fi_estatus_registro_id,fi_estatus_registro_desc) VALUES(07,'SIC REGISTRO POR FECHA SINAC')
 	END
-
+	
 	IF EXISTS( SELECT fi_sexo_id FROM SDB.CTSexo WITH( NOLOCK ))
 	BEGIN
 		DELETE FROM SDB.CTSexo
@@ -132,9 +136,10 @@ BEGIN TRY
 	----------------------------------------------------------------------------------------------------------------------------------  	
 	IF NOT EXISTS( SELECT fi_usuario_id FROM SDB.TAUsuario WITH( NOLOCK ))
 	BEGIN
-		INSERT INTO SDB.TAUsuario(fi_usuario_id,fc_usuario,fc_correo_e,fi_rol_id,fi_estatus_id,fc_contrasena) VALUES(1,'Sistemas','sistemas@sadena.gob.mx',1,1,'Sistemas123')		
+		INSERT INTO SDB.TAUsuario(fi_usuario_id,fc_usuario,fc_correo_e,fi_rol_id,fi_estatus_id,fc_contrasena) VALUES(0,'Sistemas','sistemas@sadena.gob.mx',0,1,'Sistemas123')
+		INSERT INTO SDB.TAUsuario(fi_usuario_id,fc_usuario,fc_correo_e,fi_rol_id,fi_estatus_id,fc_contrasena) VALUES(1,'Superadministrador','superadministrador@sadena.gob.mx',1,1,'5up3radm1n')		
 		INSERT INTO SDB.TAUsuario(fi_usuario_id,fc_usuario,fc_correo_e,fi_rol_id,fi_estatus_id,fc_contrasena) VALUES(2,'Administrador','administrador@sadena.gob.mx',2,1,'Administrador123')
-		INSERT INTO SDB.TAUsuario(fi_usuario_id,fc_usuario,fc_correo_e,fi_rol_id,fi_estatus_id,fc_contrasena) VALUES(3,'Analista','analista@sadena.gob.mx',3,1,'Analista123')
+		INSERT INTO SDB.TAUsuario(fi_usuario_id,fc_usuario,fc_correo_e,fi_rol_id,fi_estatus_id,fc_contrasena) VALUES(3,'Operador','operador@sadena.gob.mx',3,1,'Operador123')
 	END
 
 	

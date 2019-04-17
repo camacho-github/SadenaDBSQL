@@ -18,11 +18,7 @@ BEGIN
 		
 	CREATE TABLE SDB.TMSINAC
 	( 
-	fc_folio varchar(20) NOT NULL,
-	--fc_nombre varchar(50) NULL,
-	--fc_paterno varchar(50) NULL,
-	--fc_materno varchar(50) NULL,
-	--fc_curp_m varchar(20) NULL,
+	fc_folio varchar(20) NOT NULL,	
 	fi_ent_nacm int NOT NULL,
 	fi_mpo_nacm int NOT NULL,
 	fd_fech_nac varchar(30) NOT NULL,
@@ -31,19 +27,11 @@ BEGIN
 	fi_edocivil int NOT NULL,
 	fc_calle_res varchar(80) NOT NULL,
 	fc_numext_res varchar(20),
-	fc_numint_res varchar(20),
-	--fc_nomasen_res varchar(40) NULL,
-	--fc_codpos_res varchar(15) NULL,
+	fc_numint_res varchar(20),	
 	fi_ent_res int NOT NULL,
 	fi_mpo_res int NOT NULL,
-	fi_loc_res int NOT NULL,
-	--fc_tel_res varchar(25) NULL,
-	--fi_num_emb int NULL,
-	--fi_num_nacmto int NULL,
-	fi_num_nacvivo int NOT NULL,
-	--fi_hijo_sobv int NULL,
-	--fi_hijo_ante int NULL,
-	--fi_vive_aun int  NULL,
+	fi_loc_res int NOT NULL,	
+	fi_num_nacvivo int NOT NULL,	
 	fi_niv_escol int NOT NULL,
 	fc_ocup_hab varchar(60) NOT NULL,
 	fi_sexo int NOT NULL
@@ -70,7 +58,6 @@ GO
 IF EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TASINAC') AND SysStat & 0xf = 3)
 BEGIN
 	DROP TABLE SDB.TASINAC
-	--TRUNCATE TABLE SDB.TASINAC
 END
 GO
 ----------------------------------------------------------------------------------------------------------------------------------      
@@ -78,7 +65,6 @@ GO
 --- Fecha      : Diciembre 2018  
 --- Descripcion: Creación de la tabla SINAC
 --- Aplicacion:  SADENADB  
-----select * from SDB.TASINAC
 ----------------------------------------------------------------------------------------------------------------------------------   
 IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TASINAC') AND SysStat & 0xf = 3)
 BEGIN
@@ -122,6 +108,11 @@ BEGIN
 	CREATE NONCLUSTERED INDEX IN002TASINAC ON SDB.TASINAC (fd_rn_fecha_hora_nacimiento DESC); 
 END
 GO
+IF NOT EXISTS (SELECT name FROM sys.indexes  WITH(NOLOCK)  WHERE NAME = 'IN002TASINAC')
+BEGIN
+	CREATE NONCLUSTERED INDEX IN003TASINAC ON SDB.TASINAC (fi_rn_mpio_id DESC); 
+END
+GO
 
 IF EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TMSIC') AND SysStat & 0xf = 3)
 BEGIN
@@ -140,18 +131,14 @@ BEGIN
 	( 
 	fi_edo_ofi varchar(10) NOT NULL,
 	fi_mun_ofi varchar(10) NOT NULL,
-	--fc_descr_mun_ofi varchar(50) NOT NULL,
 	fi_oficialia int NOT NULL,
 	fc_ano varchar(4) NULL,
 	fc_fecha_reg varchar(30),
 	fc_fecha_nac varchar(30),
 	fc_localidad varchar(60),
 	fi_municipio int,
-	--fc_desc_municipio varchar(60),
-	fi_estado int NULL,
-	--fc_desc_estado varchar(60),
-	fi_pais int,
-	--fc_desc_pais varchar(60),
+	fi_estado int NULL,	
+	fi_pais int,	
 	fc_no_certif varchar(30),
 	); 
 END
@@ -178,12 +165,26 @@ BEGIN
 	fi_control_id int NOT NULL,
 	fi_edo_id int,
 	fi_mpio_id int,
+	fi_mpio_ofi_id int,
+	fi_oficialia_id int,
 	fd_rn_fecha_hora_nacimiento datetime,
 	fd_rn_fecha_registro datetime,
 	fi_estatus_duplicado int
 	); 
 END
 GO 
+
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un índice para la tabla TASINAC  
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+IF NOT EXISTS (SELECT name FROM sys.indexes  WITH(NOLOCK)  WHERE NAME = 'IN002TASIC')
+BEGIN
+	CREATE NONCLUSTERED INDEX IN002TASIC ON SDB.TASIC (fi_mpio_id,fd_rn_fecha_hora_nacimiento); 
+END
+GO
 
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
@@ -202,9 +203,6 @@ GO
 --- Fecha      : Diciembre 2018  
 --- Descripcion: Creación de la tabla Usuarios
 --- Aplicacion:  SADENADB  
---ALTER TABLE SDB.BIUsuarioSesion    DROP CONSTRAINT FK001BIUsuarioSesion
---ALTER TABLE SDB.TAUsuario    DROP CONSTRAINT FK002TAUsuario
---drop TABLE SDB.TAUsuario 
 ----------------------------------------------------------------------------------------------------------------------------------   
 IF NOT EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TAUsuario') AND SysStat & 0xf = 3)
 BEGIN	
@@ -388,7 +386,6 @@ BEGIN
 	fi_control_tipo_id int NOT NULL,
 	fc_ano varchar(4) NOT NULL,
 	fc_nombre_archivo varchar(255) NOT NULL,
-	--fc_extension varchar(8) NOT NULL,
 	fi_estatus_control_id int NOT NULL,
 	fd_fecha_alta datetime NOT NULL,
 	fd_fecha_act datetime NOT NULL

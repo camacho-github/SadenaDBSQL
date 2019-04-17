@@ -1,8 +1,5 @@
 USE SADENADB
 GO
-
---ALTER USER [UserDev] WITH DEFAULT_SCHEMA = SDB;
-
 ----------------------------------------------------------------------------------------------------------------------------------      
 --- Responsable: Jorge Alberto de la Rosa  
 --- Fecha      : Diciembre 2018  

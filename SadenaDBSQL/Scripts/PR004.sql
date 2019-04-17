@@ -1,7 +1,5 @@
 USE SADENADB
 GO
-
- 
 IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSOficinas') AND SysStat & 0xf = 4)
 BEGIN
 	DROP PROC SDB.PRSOficinas
