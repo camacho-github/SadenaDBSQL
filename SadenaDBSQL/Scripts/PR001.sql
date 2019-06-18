@@ -682,7 +682,7 @@ BEGIN TRY
 		----------------------------------------------------------------------------
 
 		EXEC SDB.PRNDepurarCargaSINAC @vi_control_id, @po_msg_code output, @po_msg output   
-		
+		EXEC SDB.PRNProcesarDuplicadosSINAC @vi_control_id, @po_msg_code output, @po_msg output   
 		-----------------------------------------------------------------------------
 		
 		UPDATE SDB.TAControlCarga SET fi_estatus_control_id = 3, fd_fecha_act = SYSDATETIME()  WHERE fi_control_tipo_id = 2 AND fi_estatus_control_id = 1
@@ -735,17 +735,71 @@ BEGIN TRY
 		SELECT @vi_control_id = fi_control_id,@vc_ano = fc_ano FROM SDB.TAControlCarga  WITH( NOLOCK ) WHERE fi_control_tipo_id = 3 and fi_estatus_control_id = 1
 		SELECT * FROM SDB.TAControlCarga  WITH( NOLOCK ) WHERE fi_control_tipo_id = 3 and fi_estatus_control_id = 1
 		
+		/*Actualiza nulos de tabla temporal*/
+		UPDATE SDB.TMSIC
+		SET fc_no_certif = ''
+		WHERE fc_no_certif IS NULL
+
+		IF EXISTS(SELECT 1 FROM SDB.TMSIC WHERE CHARINDEX(' ', fc_fecha_reg) = 9)
+		BEGIN
+			UPDATE SDB.TMSIC
+			SET fc_fecha_reg = 
+			FORMAT(
+				DATETIMEFROMPARTS(
+					(CASE 
+						WHEN CONVERT(INT,SUBSTRING(fc_fecha_reg,7,2)) <= SUBSTRING(@vc_ano,3,2) 
+							THEN '20'+ SUBSTRING(fc_fecha_reg,7,2)
+						ELSE 
+							'19'+ SUBSTRING(fc_fecha_reg,7,2)
+					END),
+					SUBSTRING(fc_fecha_reg,4,2),
+					SUBSTRING(fc_fecha_reg,1,2),
+					SUBSTRING(fc_fecha_reg,10,2),
+					SUBSTRING(fc_fecha_reg,13,2),
+					SUBSTRING(fc_fecha_reg,16,2),
+					SUBSTRING(fc_fecha_reg,19,1)
+				)
+			,'yyyy-MM-dd hh:mm:ss.0')
+			FROM SDB.TMSIC
+			WHERE CHARINDEX(' ', fc_fecha_reg) = 9
+		END
+
+		IF EXISTS(SELECT 1 FROM SDB.TMSIC WHERE CHARINDEX(' ', fc_fecha_nac) = 9)
+		BEGIN
+			
+			UPDATE SDB.TMSIC
+			SET fc_fecha_nac = 
+			FORMAT(
+				DATETIMEFROMPARTS(
+					(CASE 
+						WHEN CONVERT(INT,SUBSTRING(fc_fecha_nac,7,2)) <= SUBSTRING(@vc_ano,3,2) 
+							THEN '20'+ SUBSTRING(fc_fecha_nac,7,2)
+						ELSE 
+							'19'+ SUBSTRING(fc_fecha_nac,7,2)
+					END),
+					SUBSTRING(fc_fecha_nac,4,2),
+					SUBSTRING(fc_fecha_nac,1,2),
+					SUBSTRING(fc_fecha_nac,10,2),
+					SUBSTRING(fc_fecha_nac,13,2),
+					SUBSTRING(fc_fecha_nac,16,2),
+					SUBSTRING(fc_fecha_nac,19,1)
+				)
+			,'yyyy-MM-dd hh:mm:ss.0')
+			FROM SDB.TMSIC
+			WHERE CHARINDEX(' ', fc_fecha_nac) = 9
+		END
+
 		INSERT INTO SDB.TASIC(fc_identificador,fc_folio_certificado,fc_folio_simple_certificado, fi_control_id,
-		fi_edo_id,fi_mpio_id,fd_rn_fecha_hora_nacimiento,fd_rn_fecha_registro,fi_mpio_ofi_id,fi_oficialia_id,fi_estatus_duplicado)
+		fi_edo_id,fi_mpio_id,fd_rn_fecha_hora_nacimiento,fd_rn_fecha_registro,fi_mpio_ofi_id,fi_oficialia_id,fc_ano,fi_estatus_duplicado)
 		SELECT CONCAT(fc_no_certif, fc_fecha_reg) ,fc_no_certif,SDB.FNConvierteNumero(fc_no_certif), @vi_control_id, 
 		fi_estado,fi_municipio,
 		--convert(datetime,SUBSTRING(ltrim(rtrim(fc_fecha_nac)),0,9) + ' ' + SUBSTRING(ltrim(rtrim(fc_fecha_nac)),10,5),3),
 		convert(datetime,fc_fecha_nac),
 		--convert(datetime,SUBSTRING(ltrim(rtrim(fc_fecha_reg)),0,9),3),0
-		convert(datetime,fc_fecha_reg),fi_mun_ofi,fi_oficialia,0					
+		convert(datetime,fc_fecha_reg),fi_mun_ofi,fi_oficialia,fc_ano,0					
 		FROM SDB.TMSIC
-		WHERE YEAR(convert(datetime,fc_fecha_nac)) >= '2015'
-		AND YEAR(convert(datetime,fc_fecha_reg)) = @vc_ano
+		--WHERE YEAR(convert(datetime,fc_fecha_nac)) >= '1900' AND 
+		--YEAR(convert(datetime,fc_fecha_reg)) = @vc_ano
 
 		----------------------------------------------------------------------------
 
@@ -799,11 +853,18 @@ AS DECLARE
 	@vi_registros int,
 	@vi_renglonId int,
 	@vc_folio_simple_certificado varchar(20),
-	@vd_rn_fecha_registro datetime
+	@vd_rn_fecha_registro datetime,
+	@vd_rn_fecha_hora_nacimiento datetime
 
 	DECLARE @vtRegistrosDuplicados TABLE(
 	fi_id_renglon   INT NOT NULL IDENTITY(1,1),	
 	fc_folio_simple_certificado varchar(20) NOT NULL,	
+	fd_rn_fecha_registro datetime	
+	)
+	
+	DECLARE @vtRegistrosDuplicadosSFolio TABLE(
+	fi_id_renglon   INT NOT NULL IDENTITY(1,1),	
+	fd_rn_fecha_hora_nacimiento datetime,	
 	fd_rn_fecha_registro datetime	
 	)	
 
@@ -817,7 +878,7 @@ BEGIN TRY
 	MAX(fd_rn_fecha_registro)		
 	FROM SDB.TASIC
 	WHERE LEN(fd_rn_fecha_registro) > 0
-	AND fi_control_id = @pi_control_id
+	--AND fi_control_id = @pi_control_id
 	GROUP BY fc_folio_simple_certificado
 	having COUNT(fc_folio_simple_certificado) > 1
 	AND LEN(fc_folio_simple_certificado) >0	
@@ -839,15 +900,81 @@ BEGIN TRY
 		FROM @vtRegistrosDuplicados
 		WHERE fi_id_renglon = @vi_renglonId
 		
-		IF (@vc_folio_simple_certificado <> '0' and len(@vc_folio_simple_certificado) > 8 )
-		BEGIN			
-			UPDATE SDB.TASIC SET fi_estatus_duplicado = 1
-			WHERE fc_folio_simple_certificado = @vc_folio_simple_certificado
-			AND fd_rn_fecha_registro <> @vd_rn_fecha_registro
+		IF (@vc_folio_simple_certificado <> '0' and len(@vc_folio_simple_certificado) > 6 )
+		BEGIN
+		
+			if exists(select 1 from SDB.TASIC where fc_folio_simple_certificado =  @vc_folio_simple_certificado 
+			and fd_rn_fecha_registro <> @vd_rn_fecha_registro)
+				begin
+					UPDATE SDB.TASIC SET fi_estatus_duplicado = 0
+					WHERE fc_folio_simple_certificado = @vc_folio_simple_certificado
+					
+					UPDATE SDB.TASIC SET fi_estatus_duplicado = 1
+					WHERE fc_folio_simple_certificado = @vc_folio_simple_certificado
+					AND fd_rn_fecha_registro <> @vd_rn_fecha_registro
+				end
+			else
+				begin
+					--print @vc_folio_simple_certificado
+					UPDATE SDB.TASIC SET fi_estatus_duplicado = 0
+					WHERE fc_folio_simple_certificado = @vc_folio_simple_certificado
+
+					UPDATE top (1) SDB.TASIC  
+					SET fi_estatus_duplicado = 1
+					WHERE fc_folio_simple_certificado = @vc_folio_simple_certificado
+				end
 		END		
 
 		SET @vi_renglonId = @vi_renglonId + 1
 	END
+
+	----------------------------------------------
+	--marca registros duplicados sin folio
+	
+	INSERT @vtRegistrosDuplicadosSFolio(
+	fd_rn_fecha_hora_nacimiento,
+	fd_rn_fecha_registro)
+	SELECT fd_rn_fecha_hora_nacimiento,
+	MAX(fd_rn_fecha_registro)		
+	FROM SDB.TASIC
+	WHERE LEN(fd_rn_fecha_registro) > 0
+	--AND fi_control_id = @pi_control_id
+	GROUP BY fd_rn_fecha_hora_nacimiento,fd_rn_fecha_registro,fc_folio_simple_certificado
+	having COUNT(fd_rn_fecha_hora_nacimiento) > 1
+	and LEN(fc_folio_simple_certificado) = 0
+	
+	SELECT @vi_registros = 0, @vi_renglonId = 1
+
+	SELECT 
+		@vi_registros = COUNT(fi_id_renglon) 
+	FROM 
+		@vtRegistrosDuplicadosSFolio 
+	WHERE 
+		fi_id_renglon > 0
+	
+	WHILE @vi_renglonId <= @vi_registros
+	BEGIN
+		SELECT 
+		@vd_rn_fecha_hora_nacimiento = fd_rn_fecha_hora_nacimiento,
+		@vd_rn_fecha_registro = fd_rn_fecha_registro
+		FROM @vtRegistrosDuplicadosSFolio
+		WHERE fi_id_renglon = @vi_renglonId
+
+		print @vd_rn_fecha_hora_nacimiento
+
+		UPDATE SDB.TASIC SET fi_estatus_duplicado = 0
+		WHERE fd_rn_fecha_hora_nacimiento = @vd_rn_fecha_hora_nacimiento
+		and fd_rn_fecha_registro = @vd_rn_fecha_registro
+
+		UPDATE top (1) SDB.TASIC  
+		SET fi_estatus_duplicado = 1
+		WHERE fd_rn_fecha_hora_nacimiento = @vd_rn_fecha_hora_nacimiento
+		and fd_rn_fecha_registro = @vd_rn_fecha_registro
+		and LEN(fc_folio_simple_certificado) = 0
+		
+		SET @vi_renglonId = @vi_renglonId + 1
+	END
+		
 
 	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
 	
@@ -865,3 +992,96 @@ ERROR:
 	SET NOCOUNT OFF        
 	RETURN -1      
  GO
+
+ IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRNProcesarDuplicadosSINAC') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRNProcesarDuplicadosSINAC
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que procesa quita los duplicados del SINAC
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRNProcesarDuplicadosSINAC(
+	@pi_control_id int,
+	@po_msg_code int OUTPUT,
+	@po_msg	varchar(255) OUTPUT)
+AS DECLARE
+
+	@vi_registros int,
+	@vi_renglonId int,
+	@vc_folio_simple_certificado varchar(20),
+	@vd_rn_fecha_hora_nacimiento datetime
+
+	DECLARE @vtRegistrosDuplicados TABLE(
+	fi_id_renglon   INT NOT NULL IDENTITY(1,1),	
+	fc_folio_simple_certificado varchar(20) NOT NULL,	
+	fd_rn_fecha_hora_nacimiento datetime	
+	)	
+
+SET NOCOUNT ON
+BEGIN TRY	
+	
+	INSERT @vtRegistrosDuplicados(
+	fc_folio_simple_certificado,
+	fd_rn_fecha_hora_nacimiento)
+	SELECT fc_folio_simple_certificado,
+	MAX(fd_rn_fecha_hora_nacimiento)		
+	FROM SDB.TASINAC
+	WHERE LEN(fd_rn_fecha_hora_nacimiento) > 0
+	--AND fi_control_id = @pi_control_id
+	GROUP BY fc_folio_simple_certificado
+	having COUNT(fc_folio_simple_certificado) > 1
+	AND LEN(fc_folio_simple_certificado) >0	
+
+	SELECT @vi_registros = 0, @vi_renglonId = 1
+
+	SELECT 
+		@vi_registros = COUNT(fi_id_renglon) 
+	FROM 
+		@vtRegistrosDuplicados 
+	WHERE 
+		fi_id_renglon > 0
+
+	WHILE @vi_renglonId <= @vi_registros
+	BEGIN
+		SELECT 
+		@vc_folio_simple_certificado = Isnull(Nullif(LTRIM(RTRIM(fc_folio_simple_certificado)), '0'), LTRIM(RTRIM(fc_folio_simple_certificado))),
+		@vd_rn_fecha_hora_nacimiento = fd_rn_fecha_hora_nacimiento
+		FROM @vtRegistrosDuplicados
+		WHERE fi_id_renglon = @vi_renglonId
+		
+		IF (@vc_folio_simple_certificado <> '0' and len(@vc_folio_simple_certificado) > 8 )
+		BEGIN			
+			UPDATE SDB.TASINAC SET fi_estatus_duplicado = 0
+			WHERE fc_folio_simple_certificado = @vc_folio_simple_certificado
+
+			UPDATE SDB.TASINAC SET fi_estatus_duplicado = 1
+			WHERE fc_folio_simple_certificado = @vc_folio_simple_certificado
+			AND fd_rn_fecha_hora_nacimiento <> @vd_rn_fecha_hora_nacimiento
+		END		
+
+		SET @vi_renglonId = @vi_renglonId + 1
+	END
+
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'		
+	
+END TRY
+BEGIN CATCH		
+		SELECT @po_msg_code=-1, @po_msg = 'Error al quitar duplicados en tabla SINAC'
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
+ 
+
+

@@ -1,7 +1,292 @@
 USE SADENADB
 GO
+ 
+IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSUsuarios') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRSUsuarios
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que consulta los usuarios existenes
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRSUsuarios(
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 	
+	
+	SET NOCOUNT ON
+
+BEGIN TRY		
+
+	SELECT 
+	u.fi_usuario_id AS 'Usuario ID',
+	u.fc_usuario AS 'Usuario',
+	u.fc_correo_e as 'Correo',
+	u.fc_contrasena as 'Contraseña',
+	u.fi_rol_id as 'Rol ID',
+	r.fc_rol_desc as 'Rol',
+	u.fi_estatus_id as 'Estatus ID'		
+	FROM SDB.TAUsuario u
+	INNER JOIN SDB.CTROL r	
+	on u.fi_rol_id = r.fi_rol_id	
+	WHERE u.fi_rol_id > 1
+	
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener el parámetro ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
 
 
+IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSUsuario') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRSUsuario
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que consulta un usuarios
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRSUsuario(
+@pi_usuario_id INT,
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 	
+	
+	SET NOCOUNT ON
+
+BEGIN TRY		
+
+	SELECT 
+	u.fi_usuario_id AS UsuarioId,
+	u.fc_usuario AS UsuarioDesc,
+	u.fc_correo_e as CorreoE,
+	u.fc_contrasena as Contrasenia,
+	u.fi_rol_id as RolId,
+	r.fc_rol_desc as RolDesc,
+	u.fi_estatus_id as EstatusId	
+	FROM SDB.TAUsuario u
+	INNER JOIN SDB.CTROL r
+	on u.fi_rol_id = r.fi_rol_id
+	WHERE fi_usuario_id = @pi_usuario_id	
+	
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener el parámetro ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
+
+
+IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRIUsuario') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRIUsuario
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que inserta un usuario
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRIUsuario(
+@pc_usuario varchar(40),
+@pc_correo_e varchar(60),
+@pi_rol_id int,
+@pi_estatus_id int,
+@pc_contrasena varchar(40),
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 	
+DECLARE 	
+	
+@viConsecutivo INT
+	
+	SET NOCOUNT ON
+	
+BEGIN TRY	
+		
+		IF EXISTS(SELECT 1 FROM SDB.TAUsuario u WHERE u.fc_usuario = @pc_usuario and u.fi_estatus_id = 1) OR EXISTS(SELECT 1 FROM SDB.TAUsuario u WHERE u.fc_correo_e = @pc_correo_e and u.fi_estatus_id = 1)
+			BEGIN 
+				SELECT @po_msg_code=1, @po_msg = 'El usuario ya existe'
+			END
+		ELSE
+			BEGIN
+				SELECT 
+				@viConsecutivo = ISNULL(MAX(fi_usuario_id), 0) + 1 
+				FROM 
+				SDB.TAUsuario WITH(ROWLOCK, UPDLOCK) 
+		
+				INSERT INTO SDB.TAUsuario(fi_usuario_id,fc_usuario,fc_correo_e,fi_rol_id,fi_estatus_id,fc_contrasena) VALUES(@viConsecutivo,@pc_usuario,@pc_correo_e,@pi_rol_id,@pi_estatus_id,@pc_contrasena)	
+
+				SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+
+			END		
+	
+
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al insertar el usuario ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
+
+
+IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRUUsuario') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRUUsuario
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que actualiza el usuario
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRUUsuario(
+@pi_usuario_id INT,
+@pc_usuario varchar(40),
+@pc_correo_e varchar(60),
+@pi_rol_id int,
+@pi_estatus_id int,
+@pc_contrasena varchar(40),
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 	DECLARE
+@vdFechaActual	DATETIME	
+	
+SET NOCOUNT ON
+	
+BEGIN TRY
+
+		SELECT @vdFechaActual = SYSDATETIME()	
+		
+		IF EXISTS(SELECT 1 FROM SDB.TAUsuario u WHERE u.fi_usuario_id = @pi_usuario_id)			
+			BEGIN						
+				UPDATE SDB.TAUsuario
+				SET fc_usuario = @pc_usuario,
+				fc_correo_e = @pc_correo_e,
+				fc_contrasena = @pc_contrasena,
+				fi_rol_id = @pi_rol_id,
+				fi_estatus_id = @pi_estatus_id,
+				fd_fecha_act = @vdFechaActual
+				WHERE fi_usuario_id = @pi_usuario_id
+			END
+		ELSE
+			BEGIN
+				SELECT @po_msg_code=1, @po_msg = 'El usuario a actualizar no existe'
+			END		
+			
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al actualizar el usuario ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
+
+ IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRDelUsuario') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRDelUsuario
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que elimina el usuario
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRDelUsuario(
+@pi_usuario_id INT,
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 	DECLARE
+@vdFechaActual	DATETIME	
+	
+SET NOCOUNT ON
+	
+BEGIN TRY
+
+		SELECT @vdFechaActual = SYSDATETIME()	
+		
+		IF EXISTS(SELECT 1 FROM SDB.TAUsuario u WHERE u.fi_usuario_id = @pi_usuario_id)			
+			BEGIN						
+				UPDATE SDB.TAUsuario
+				SET fi_estatus_id = 2,
+				fd_fecha_act = @vdFechaActual
+				WHERE fi_usuario_id = @pi_usuario_id
+			END
+		ELSE
+			BEGIN
+				SELECT @po_msg_code=1, @po_msg = 'El usuario a actualizar no existe'
+			END		
+			
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al actualizar el usuario ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
+
+ 
 IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRNIniciarSesion') AND SysStat & 0xf = 4)
 BEGIN
 	DROP PROC SDB.PRNIniciarSesion
@@ -180,8 +465,8 @@ ERROR:
 	SET NOCOUNT OFF        
 	RETURN -1      
  GO
- 
-IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSBIUsuarioSesion') AND SysStat & 0xf = 4)
+
+ IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSBIUsuarioSesion') AND SysStat & 0xf = 4)
 BEGIN
 	DROP PROC SDB.PRSBIUsuarioSesion
 END
@@ -238,3 +523,8 @@ ERROR:
 	SET NOCOUNT OFF        
 	RETURN -1      
  GO
+
+
+
+
+ 		

@@ -84,6 +84,89 @@ ERROR:
 	RETURN -1      
  GO
 
+ IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSCatalogosSICPreConsulta') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRSCatalogosSICPreConsulta
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que consulta los catálogos a mostrar en la búsqueda del SIC
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRSCatalogosSICPreConsulta(
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 	
+	DECLARE 
+	@CONST_CONTROL_TIPO_SINAC INT = 2,
+	@CONST_CONTROL_TIPO_SIC INT = 3,
+	@CONST_COAHUILA_EDO_ID INT = 5,
+		
+	@CONST_ESTATUS_CONTROL_PROCESADO INT = 3,
+	@vi_registros int,
+	@vi_renglonId int	
+
+	SET NOCOUNT ON
+		
+BEGIN TRY	
+
+	IF EXISTS(		 
+	SELECT SIC.fi_control_id FROM
+		SDB.TAControlCarga SIC WITH( NOLOCK)		
+	WHERE 
+		SIC.fi_control_tipo_id = @CONST_CONTROL_TIPO_SIC AND SIC.fi_estatus_control_id = @CONST_ESTATUS_CONTROL_PROCESADO
+	)
+	BEGIN
+		SELECT SIC.fc_ano as AnoRegistroSIC		
+		FROM
+		SDB.TAControlCarga SIC WITH(NOLOCK)		
+		WHERE 
+		SIC.fi_control_tipo_id = @CONST_CONTROL_TIPO_SIC AND  SIC.fi_estatus_control_id = @CONST_ESTATUS_CONTROL_PROCESADO		
+
+		
+		SELECT DISTINCT YEAR(fd_rn_fecha_hora_nacimiento) AS AnoNacSIC
+		FROM SDB.TASIC WITH(NOLOCK)	
+		WHERE YEAR(fd_rn_fecha_hora_nacimiento) > 0
+		ORDER BY 1 ASC
+		
+		SET LANGUAGE Spanish
+	
+		SELECT  (x.number + 1) as MesId,DATENAME(MONTH, DATEADD(MONTH, x.number, '20000101')) AS MesDesc
+		FROM    master.dbo.spt_values x
+		WHERE   x.type = 'P'        
+		AND     x.number <= DATEDIFF(MONTH, '20000101', '20001231'); 
+
+		SELECT fi_mpio_id as MpioId,fc_mpio_desc as MpioDesc
+		FROM SDB.CTMunicipio WITH(NOLOCK)	
+		--UNION SELECT '666' as MpioId,'Otros' as MpioDesc
+		
+		
+
+	END
+	ELSE
+		BEGIN
+			SELECT @po_msg_code=1, @po_msg = 'No existen registros cargados para consultar, favor de notificar al administrador'
+		END
+
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener la consulta de años cargados ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
+
 
 IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSConsultaMesesXAnio') AND SysStat & 0xf = 4)
 BEGIN
@@ -329,6 +412,7 @@ BEGIN TRY
 	WHERE r.fi_estatus_registro_id = @CONST_SUBREGISTRO_ID
 
 	SELECT 'Oportunos',r.fc_folio_certificado as Folio,
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_registro_sic,105) as FechaRegistro,
 	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 105) as FechaNacimiento,
 	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 108) as HoraNacimiento,
 	r.fi_rn_sexo_id as SexoId, cts.fc_sexo_desc as SexoDesc,
@@ -349,6 +433,7 @@ BEGIN TRY
 	WHERE fi_estatus_registro_id = @CONST_OPORTUNO_ID
 
 	SELECT 'Extemporaneos',r.fc_folio_certificado as Folio,
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_registro_sic,105) as FechaRegistro,
 	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 105) as FechaNacimiento,
 	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 108) as HoraNacimiento,
 	r.fi_rn_sexo_id as SexoId, cts.fc_sexo_desc as SexoDesc,
@@ -369,8 +454,10 @@ BEGIN TRY
 	WHERE fi_estatus_registro_id = @CONST_EXTEMPORANEO_ID
 
 	SELECT 'Duplicados'
-	,r.fc_folio_certificado as Folio,
+	,r.fc_folio_certificado as Folio,	
+	CONVERT(VARCHAR(10), sic.fd_rn_fecha_registro,105) as FechaRegistro,
 	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 105) as FechaNacimiento,
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 108) as HoraNacimiento,
 	r.fi_rn_sexo_id as SexoId, cts.fc_sexo_desc as SexoDesc,
 	r.fi_ma_dom_edo_id as EdoId,ctloc.fc_loc_edo_desc as EdoDesc,
 	r.fi_ma_dom_mpio_id as MpioId,ctloc.fc_loc_mpio_desc as MpioDesc,
@@ -382,12 +469,579 @@ BEGIN TRY
 	r.fi_ma_edo_civil_id as EdoCivilId, ctciv.fc_edo_civil_desc as EdoCivilDesc,
 	r.fi_ma_escol_id as EscolId,ctescol.fc_escol_desc as EscolDesc 
 	FROM @vtRegistros r 
+	INNER JOIN SDB.TASIC SIC ON r.fc_folio_simple_certificado = SIC.fc_folio_simple_certificado
 	INNER JOIN SDB.CTSexo cts on cts.fi_sexo_id = r.fi_rn_sexo_id
 	INNER JOIN SDB.CTEdoCivil ctciv on ctciv.fi_edo_civil_id = r.fi_ma_edo_civil_id
 	INNER JOIN SDB.CTEscolaridad ctescol on ctescol.fi_escol_id = r.fi_ma_escol_id	
-	INNER JOIN SDB.CTLocalidad ctloc on ctloc.fi_loc_edo_id = r.fi_ma_dom_edo_id and ctloc.fi_loc_mpio_id = r.fi_ma_dom_mpio_id and ctloc.fi_loc_id = r.fi_ma_dom_loc_id
-	WHERE fi_estatus_registro_id = @CONST_DUPLICADO_ID
+	left JOIN SDB.CTLocalidad ctloc on ctloc.fi_loc_edo_id = r.fi_ma_dom_edo_id and ctloc.fi_loc_mpio_id = r.fi_ma_dom_mpio_id and ctloc.fi_loc_id = r.fi_ma_dom_loc_id
+	WHERE fi_estatus_registro_id = 4
+	AND SIC.fi_estatus_duplicado = 1
+	order by 1 asc
 
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener subregistro ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
+
+IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSTotalSINAC') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRSTotalSINAC
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que obtiene el total del SINAC
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRSTotalSINAC(
+@pc_anos VARCHAR(255),  
+@pc_meses VARCHAR(255),
+@pc_municipios VARCHAR(255),
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 		
+	
+	SET NOCOUNT ON
+
+BEGIN TRY		
+	
+	SELECT COUNT(*) AS TotalSINAC
+	FROM SDB.TASINAC sinac
+	WHERE   
+	(
+	 --fi_rn_edo_id = 5
+	 --fi_estatus_duplicado = 0
+	 (@pc_anos IS NULL OR (@pc_anos IS NOT NULL AND YEAR(sinac.fd_rn_fecha_hora_nacimiento) IN (SELECT A.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_anos) A))))  
+	 AND (@pc_meses IS NULL OR (@pc_meses IS NOT NULL AND MONTH(sinac.fd_rn_fecha_hora_nacimiento) IN (SELECT M.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_meses) M)))  
+	 AND (@pc_municipios IS NULL OR (@pc_municipios IS NOT NULL AND SINAC.fi_rn_mpio_id IN(SELECT Mun.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_municipios) Mun)))  
+	
+	
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener subregistro ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
+ 
+IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSInconsistenciasSIC') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRSInconsistenciasSIC
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que obtiene los folios inconsistentes en sic
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRSInconsistenciasSIC(
+@pc_anos_registro VARCHAR(255),
+@pc_anos_nacimiento VARCHAR(255),  
+@pc_meses VARCHAR(255),
+@pc_municipios VARCHAR(255),
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 	
+	
+	
+	SET NOCOUNT ON
+
+BEGIN TRY		
+	
+	SELECT 	r.fc_folio_certificado as 'Folio SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 105) as 'Fecha Nacimiento SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_registro, 105) as 'Fecha Registro SIC',
+	r.fi_edo_id as 'Estado ID Nacimiento',
+	loc.fc_loc_edo_desc as 'Estado Nacimiento',
+	r.fi_mpio_id as 'Municipio ID Nacimiento',
+	loc.fc_loc_mpio_desc as 'Municipio Nacimiento',
+	r.fi_mpio_ofi_id as 'Municipio ID Oficialia',
+	ctMpio.fc_mpio_desc as 'Municipio Oficialia',
+	r.fi_oficialia_id as 'Oficialia ID'
+	FROM sdb.tasic r 
+	OUTER APPLY
+    (
+        SELECT TOP 1 *
+        FROM SDB.CTLocalidad ctloc 
+        WHERE ctloc.fi_loc_edo_id = r.fi_edo_id and ctloc.fi_loc_mpio_id = r.fi_mpio_id
+    ) loc
+	left JOIN SDB.CTMunicipio ctMpio on ctMpio.fi_mpio_id = r.fi_mpio_ofi_id
+	WHERE 
+	r.fi_edo_id = 5 AND
+	PATINDEX('%[^a-zA-Z0-9 ]%', r.fc_folio_certificado) <> 0
+	AND
+	(@pc_anos_registro IS NULL OR (@pc_anos_registro IS NOT NULL AND 
+	CAST(r.fc_ano AS INT) IN (SELECT A.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_anos_registro) A)
+	)) 
+	and
+	(@pc_anos_nacimiento IS NULL OR (@pc_anos_nacimiento IS NOT NULL AND
+	YEAR(r.fd_rn_fecha_hora_nacimiento) IN (SELECT N.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_anos_nacimiento) N)
+	))
+	AND (@pc_meses IS NULL OR (@pc_meses IS NOT NULL AND MONTH(r.fd_rn_fecha_hora_nacimiento) IN (SELECT M.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_meses) M)))  
+    AND (@pc_municipios IS NULL OR (@pc_municipios IS NOT NULL AND r.fi_mpio_ofi_id IN(SELECT Mun.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_municipios) Mun)))  
+
+
+	SELECT 	r.fc_folio_certificado as 'Folio SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 105) as 'Fecha Nacimiento SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_registro, 105) as 'Fecha Registro SIC',
+	r.fi_edo_id as 'Estado ID Nacimiento',
+	loc.fc_loc_edo_desc as 'Estado Nacimiento',
+	r.fi_mpio_id as 'Municipio ID Nacimiento',
+	loc.fc_loc_mpio_desc as 'Municipio Nacimiento',
+	r.fi_mpio_ofi_id as 'Municipio ID Oficialia',
+	ctMpio.fc_mpio_desc as 'Municipio Oficialia',
+	r.fi_oficialia_id as 'Oficialia ID'
+	FROM sdb.tasic r 
+	OUTER APPLY
+    (
+        SELECT TOP 1 *
+        FROM SDB.CTLocalidad ctloc 
+        WHERE ctloc.fi_loc_edo_id = r.fi_edo_id and ctloc.fi_loc_mpio_id = r.fi_mpio_id
+    ) loc
+	left JOIN SDB.CTMunicipio ctMpio on ctMpio.fi_mpio_id = r.fi_mpio_ofi_id
+	WHERE 
+	r.fi_edo_id = 5
+	AND r.fi_estatus_duplicado = 1
+	AND
+	(@pc_anos_registro IS NULL OR (@pc_anos_registro IS NOT NULL AND 
+	CAST(r.fc_ano AS INT) IN (SELECT A.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_anos_registro) A)
+	)) 
+	and
+	(@pc_anos_nacimiento IS NULL OR (@pc_anos_nacimiento IS NOT NULL AND
+	YEAR(r.fd_rn_fecha_hora_nacimiento) IN (SELECT N.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_anos_nacimiento) N)
+	))
+	AND (@pc_meses IS NULL OR (@pc_meses IS NOT NULL AND MONTH(r.fd_rn_fecha_hora_nacimiento) IN (SELECT M.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_meses) M)))  
+    AND (@pc_municipios IS NULL OR (@pc_municipios IS NOT NULL AND r.fi_mpio_ofi_id IN(SELECT Mun.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_municipios) Mun)))  
+ 
+    
+	
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener subregistro ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
+
+IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSOtrosFoliosSIC') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRSOtrosFoliosSIC
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que obtiene registros sic de otros estados o nacidos en otros años
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRSOtrosFoliosSIC(
+@pc_anos_registro VARCHAR(255),
+@pc_anos_nacimiento VARCHAR(255),  
+@pc_meses VARCHAR(255),
+@pc_municipios VARCHAR(255),
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 	
+	
+	
+	SET NOCOUNT ON
+
+BEGIN TRY		
+
+	SELECT 	r.fc_folio_certificado as 'Folio SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 105) as 'Fecha Nacimiento SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_registro, 105) as 'Fecha Registro SIC',
+	r.fi_edo_id as 'Estado ID Nacimiento',
+	loc.fc_loc_edo_desc as 'Estado Nacimiento',
+	r.fi_mpio_id as 'Municipio ID Nacimiento',
+	loc.fc_loc_mpio_desc as 'Municipio Nacimiento',
+	r.fi_mpio_ofi_id as 'Municipio ID Oficialia',
+	ctMpio.fc_mpio_desc as 'Municipio Oficialia',
+	r.fi_oficialia_id as 'Oficialia ID'
+	FROM sdb.tasic r 
+	OUTER APPLY
+    (
+        SELECT TOP 1 *
+        FROM SDB.CTLocalidad ctloc 
+        WHERE ctloc.fi_loc_edo_id = r.fi_edo_id and ctloc.fi_loc_mpio_id = r.fi_mpio_id
+    ) loc
+	left JOIN SDB.CTMunicipio ctMpio on ctMpio.fi_mpio_id = r.fi_mpio_ofi_id
+	WHERE 
+	r.fi_edo_id <> 5
+	AND
+	(@pc_anos_registro IS NULL OR (@pc_anos_registro IS NOT NULL AND 
+	CAST(r.fc_ano AS INT) IN (SELECT A.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_anos_registro) A)
+	)) 
+	and
+	(@pc_anos_nacimiento IS NULL OR (@pc_anos_nacimiento IS NOT NULL AND
+	YEAR(r.fd_rn_fecha_hora_nacimiento) IN (SELECT N.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_anos_nacimiento) N)
+	))
+	AND (@pc_meses IS NULL OR (@pc_meses IS NOT NULL AND MONTH(r.fd_rn_fecha_hora_nacimiento) IN (SELECT M.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_meses) M)))  
+
+	  /*Soluciona registros que tienen slash en el certificado*/
+
+	SELECT REPLACE(r.fc_folio_certificado, '/', ' ')  as 'Folio SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 105) as 'Fecha Nacimiento SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_registro, 105) as 'Fecha Registro SIC',
+	r.fi_edo_id as 'Estado ID Nacimiento',
+	loc.fc_loc_edo_desc as 'Estado Nacimiento',
+	r.fi_mpio_id as 'Municipio ID Nacimiento',
+	loc.fc_loc_mpio_desc as 'Municipio Nacimiento',
+	r.fi_mpio_ofi_id as 'Municipio ID Oficialia',
+	ctMpio.fc_mpio_desc as 'Municipio Oficialia',
+	r.fi_oficialia_id as 'Oficialia ID'
+	FROM sdb.tasic r 
+	OUTER APPLY
+    (
+        SELECT TOP 1 *
+        FROM SDB.CTLocalidad ctloc 
+        WHERE ctloc.fi_loc_edo_id = r.fi_edo_id and ctloc.fi_loc_mpio_id = r.fi_mpio_id
+    ) loc
+	left JOIN SDB.CTMunicipio ctMpio on ctMpio.fi_mpio_id = r.fi_mpio_ofi_id
+	WHERE 
+	(@pc_anos_registro IS NULL OR (@pc_anos_registro IS NOT NULL AND 
+	CAST(r.fc_ano AS INT) IN (SELECT A.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_anos_registro) A)
+	)) 
+	and
+	YEAR(r.fd_rn_fecha_hora_nacimiento) < 2015
+	AND (@pc_meses IS NULL OR (@pc_meses IS NOT NULL AND MONTH(r.fd_rn_fecha_hora_nacimiento) IN (SELECT M.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_meses) M)))  
+    AND (@pc_municipios IS NULL OR (@pc_municipios IS NOT NULL AND r.fi_mpio_ofi_id IN(SELECT Mun.numero FROM SDB.FNConvierteCadenaEnTablaEnteros(@pc_municipios) Mun)))  
+	
+	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
+
+END TRY
+BEGIN CATCH
+		SELECT @po_msg_code=-1, @po_msg = 'Error al obtener subregistro ' + ERROR_MESSAGE()
+		GOTO ERROR
+END CATCH
+	
+SET NOCOUNT OFF
+RETURN 0        
+       
+ERROR:        
+	RAISERROR (@po_msg,18,1)      
+	SET NOCOUNT OFF        
+	RETURN -1      
+ GO
+ 
+ IF EXISTS (SELECT name FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.PRSCoberturaSIC') AND SysStat & 0xf = 4)
+BEGIN
+	DROP PROC SDB.PRSCoberturaSIC
+END
+GO
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un stored procedure que obtiene la covertura de información de sic
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+CREATE PROCEDURE SDB.PRSCoberturaSIC(
+@pc_anos_registro VARCHAR(255),
+@pc_anos_nacimiento VARCHAR(255),  
+@pc_meses VARCHAR(255),
+@pc_municipios VARCHAR(255),
+@po_msg_code INT OUTPUT,
+@po_msg	VARCHAR(255) OUTPUT)
+
+AS 	
+	DECLARE @vtRegistros TABLE(
+	fi_id_renglon   INT NOT NULL IDENTITY(1,1),
+	fc_folio_certificado varchar(20) NOT NULL,  
+	fc_folio_simple_certificado varchar(20) NOT NULL,  
+	fd_rn_fecha_hora_nacimiento datetime,  
+	fd_rn_fecha_registro datetime,   
+	fi_edo_id int,  
+	fi_mpio_id int,
+	fi_mpio_ofi_id int,
+	fi_oficialia_id int,
+	fc_folio_certificado_sinac varchar(20),  
+	fc_folio_simple_certificado_sinac varchar(20),  
+	fd_rn_fecha_hora_nacimiento_sinac datetime,   
+	fi_estatus_registro_id int NOT NULL,
+	fi_estatus_duplicado_sinac int NOT NULL,
+	fi_numero_registros int,
+	fi_tipo_relacionado_sic int
+	) 
+	
+	DECLARE
+	@CONST_DUPLICADO_ID INT = 4,
+	@CONST_NOREGISTRADO_SINAC_ID INT = 5,    
+	@CONST_REGISTRADO_FOLIO_SINAC_ID INT = 6, 
+	@CONST_REGISTRADO_FECHA_SINAC_ID INT = 7,   
+	@CONST_COAHUILA_EDO_ID INT = 5
+	
+	SET NOCOUNT ON
+
+BEGIN TRY		
+	-- Inserta todos los registros del sinac, sin subregistro
+	
+	INSERT @vtRegistros(  
+	fc_folio_certificado,  
+	fc_folio_simple_certificado,  
+	fd_rn_fecha_hora_nacimiento,
+	fd_rn_fecha_registro, 
+	fi_edo_id,  
+	fi_mpio_id,
+	fi_mpio_ofi_id,
+	fi_oficialia_id,
+	fc_folio_certificado_sinac, 
+	fc_folio_simple_certificado_sinac,  
+	fd_rn_fecha_hora_nacimiento_sinac,   
+	fi_estatus_registro_id,
+	fi_estatus_duplicado_sinac,
+	fi_numero_registros,
+	fi_tipo_relacionado_sic)   
+	SELECT 
+	VT.fc_folio_certificado,  
+	VT.fc_folio_simple_certificado,  
+	VT.fd_rn_fecha_hora_nacimiento,
+	VT.fd_rn_fecha_registro, 
+	VT.fi_edo_id,  
+	VT.fi_mpio_id,
+	VT.fi_mpio_ofi_id,
+	VT.fi_oficialia_id,
+	VT.fc_folio_certificado_sinac, 
+	VT.fc_folio_simple_certificado_sinac,  
+	VT.fd_rn_fecha_hora_nacimiento_sinac,   
+	VT.fi_estatus_registro_id,
+	VT.fi_estatus_duplicado_sinac,
+	VT.fi_numero_registros,
+	VT.fi_tipo_relacionado_sic
+	FROM SDB.FNObtieneCoberturaSIC(@pc_anos_registro,@pc_anos_nacimiento,@pc_meses,@pc_municipios) VT
+
+	
+	--SELECT 'Totales Subregistro', vt.fi_estatus_registro_id as IdGrupo, ct.fi_estatus_registro_desc as NombreGrupo,count(vt.fi_estatus_registro_id) as Total
+	--FROM @vtRegistros vt INNER JOIN SDB.CTEstatusRegistro ct
+	--ON vt.fi_estatus_registro_id = ct.fi_estatus_registro_id
+	--GROUP BY vt.fi_estatus_registro_id,ct.fi_estatus_registro_desc
+	
+
+	--'Registro Oportuno relacionado por folio'
+	SELECT 'Registro Oportuno relacionado por folio',
+	r.fc_folio_certificado as 'Folio SIC',
+	r.fc_folio_certificado_sinac as 'Folio SINAC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 105) as 'Fecha Nacimiento SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento_sinac, 105)  as 'Fecha Nacimiento SINAC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_registro, 105) as 'Fecha Registro SIC',
+	r.fi_edo_id as 'Estado ID Nacimiento',
+	loc.fc_loc_edo_desc as 'Estado Nacimiento',
+	r.fi_mpio_id as 'Municipio ID Nacimiento',
+	loc.fc_loc_mpio_desc as 'Municipio Nacimiento',
+	r.fi_mpio_ofi_id as 'Municipio ID Oficialia',
+	ctMpio.fc_mpio_desc as 'Municipio Oficialia',
+	r.fi_oficialia_id as 'Oficialia ID'
+	FROM @vtRegistros r 
+	OUTER APPLY
+    (
+        SELECT TOP 1 *
+        FROM SDB.CTLocalidad ctloc 
+        WHERE ctloc.fi_loc_edo_id = r.fi_edo_id and ctloc.fi_loc_mpio_id = r.fi_mpio_id
+    ) loc
+	left JOIN SDB.CTMunicipio ctMpio on ctMpio.fi_mpio_id = r.fi_mpio_ofi_id
+	WHERE r.fi_tipo_relacionado_sic = 1
+	and r.fi_estatus_registro_id = 2
+
+	--'Registro Oportuno relacionado por Fecha'
+	SELECT 'Registro Oportuno relacionado por Fecha',
+	r.fc_folio_certificado as 'Folio SIC',
+	r.fc_folio_certificado_sinac as 'Folio SINAC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 105) as 'Fecha Nacimiento SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento_sinac, 105)  as 'Fecha Nacimiento SINAC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_registro, 105) as 'Fecha Registro SIC',
+	r.fi_edo_id as 'Estado ID Nacimiento',
+	loc.fc_loc_edo_desc as 'Estado Nacimiento',
+	r.fi_mpio_id as 'Municipio ID Nacimiento',
+	loc.fc_loc_mpio_desc as 'Municipio Nacimiento',
+	r.fi_mpio_ofi_id as 'Municipio ID Oficialia',
+	ctMpio.fc_mpio_desc as 'Municipio Oficialia',
+	r.fi_oficialia_id as 'Oficialia ID'
+	FROM @vtRegistros r 
+	OUTER APPLY
+    (
+        SELECT TOP 1 *
+        FROM SDB.CTLocalidad ctloc 
+        WHERE ctloc.fi_loc_edo_id = r.fi_edo_id and ctloc.fi_loc_mpio_id = r.fi_mpio_id
+    ) loc
+	left JOIN SDB.CTMunicipio ctMpio on ctMpio.fi_mpio_id = r.fi_mpio_ofi_id
+	WHERE r.fi_tipo_relacionado_sic = 2
+	and r.fi_estatus_registro_id = 2
+
+	--'Registro Extemporaneo relacionado por folio'
+	SELECT 'Registro Extemporaneo relacionado por folio',
+	r.fc_folio_certificado as 'Folio SIC',
+	r.fc_folio_certificado_sinac as 'Folio SINAC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 105) as 'Fecha Nacimiento SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento_sinac, 105)  as 'Fecha Nacimiento SINAC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_registro, 105) as 'Fecha Registro SIC',
+	r.fi_edo_id as 'Estado ID Nacimiento',
+	loc.fc_loc_edo_desc as 'Estado Nacimiento',
+	r.fi_mpio_id as 'Municipio ID Nacimiento',
+	loc.fc_loc_mpio_desc as 'Municipio Nacimiento',
+	r.fi_mpio_ofi_id as 'Municipio ID Oficialia',
+	ctMpio.fc_mpio_desc as 'Municipio Oficialia',
+	r.fi_oficialia_id as 'Oficialia ID'
+	FROM @vtRegistros r 
+	OUTER APPLY
+    (
+        SELECT TOP 1 *
+        FROM SDB.CTLocalidad ctloc 
+        WHERE ctloc.fi_loc_edo_id = r.fi_edo_id and ctloc.fi_loc_mpio_id = r.fi_mpio_id
+    ) loc
+	left JOIN SDB.CTMunicipio ctMpio on ctMpio.fi_mpio_id = r.fi_mpio_ofi_id
+	WHERE r.fi_tipo_relacionado_sic = 1
+	and r.fi_estatus_registro_id = 3
+
+	--'Registro Extemporaneo relacionado por Fecha'
+	SELECT 'Registro Extemporaneo relacionado por Fecha',
+	r.fc_folio_certificado as 'Folio SIC',
+	r.fc_folio_certificado_sinac as 'Folio SINAC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 105) as 'Fecha Nacimiento SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento_sinac, 105)  as 'Fecha Nacimiento SINAC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_registro, 105) as 'Fecha Registro SIC',
+	r.fi_edo_id as 'Estado ID Nacimiento',
+	loc.fc_loc_edo_desc as 'Estado Nacimiento',
+	r.fi_mpio_id as 'Municipio ID Nacimiento',
+	loc.fc_loc_mpio_desc as 'Municipio Nacimiento',
+	r.fi_mpio_ofi_id as 'Municipio ID Oficialia',
+	ctMpio.fc_mpio_desc as 'Municipio Oficialia',
+	r.fi_oficialia_id as 'Oficialia ID'
+	FROM @vtRegistros r 
+	OUTER APPLY
+    (
+        SELECT TOP 1 *
+        FROM SDB.CTLocalidad ctloc 
+        WHERE ctloc.fi_loc_edo_id = r.fi_edo_id and ctloc.fi_loc_mpio_id = r.fi_mpio_id
+    ) loc
+	left JOIN SDB.CTMunicipio ctMpio on ctMpio.fi_mpio_id = r.fi_mpio_ofi_id
+	WHERE r.fi_tipo_relacionado_sic = 2
+	and r.fi_estatus_registro_id = 3
+
+	--Registros oportunos sólo SIC - sin relacion SINAC
+	SELECT 'Registros oportunos sin relacion SINAC',
+	r.fc_folio_certificado as 'Folio SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 105) as 'Fecha Nacimiento SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_registro, 105) as 'Fecha Registro SIC',
+	r.fi_edo_id as 'Estado ID Nacimiento',
+	loc.fc_loc_edo_desc as 'Estado Nacimiento',
+	r.fi_mpio_id as 'Municipio ID Nacimiento',
+	loc.fc_loc_mpio_desc as 'Municipio Nacimiento',
+	r.fi_mpio_ofi_id as 'Municipio ID Oficialia',
+	ctMpio.fc_mpio_desc as 'Municipio Oficialia',
+	r.fi_oficialia_id as 'Oficialia ID'
+	FROM @vtRegistros r 
+	OUTER APPLY
+    (
+        SELECT TOP 1 *
+        FROM SDB.CTLocalidad ctloc 
+        WHERE ctloc.fi_loc_edo_id = r.fi_edo_id and ctloc.fi_loc_mpio_id = r.fi_mpio_id
+    ) loc
+	left JOIN SDB.CTMunicipio ctMpio on ctMpio.fi_mpio_id = r.fi_mpio_ofi_id
+	WHERE r.fi_tipo_relacionado_sic = 0
+	and r.fi_estatus_registro_id = 2
+
+	--Registros extemporaneos sólo SIC - sin relacion SINAC
+	SELECT 'Registros extemporaneos sólo SIC',
+	r.fc_folio_certificado as 'Folio SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 105) as 'Fecha Nacimiento SIC',
+	CONVERT(VARCHAR(10), r.fd_rn_fecha_registro, 105) as 'Fecha Registro SIC',
+	r.fi_edo_id as 'Estado ID Nacimiento',
+	loc.fc_loc_edo_desc as 'Estado Nacimiento',
+	r.fi_mpio_id as 'Municipio ID Nacimiento',
+	loc.fc_loc_mpio_desc as 'Municipio Nacimiento',
+	r.fi_mpio_ofi_id as 'Municipio ID Oficialia',
+	ctMpio.fc_mpio_desc as 'Municipio Oficialia',
+	r.fi_oficialia_id as 'Oficialia ID'
+	FROM @vtRegistros r 
+	OUTER APPLY
+    (
+        SELECT TOP 1 *
+        FROM SDB.CTLocalidad ctloc 
+        WHERE ctloc.fi_loc_edo_id = r.fi_edo_id and ctloc.fi_loc_mpio_id = r.fi_mpio_id
+    ) loc
+	left JOIN SDB.CTMunicipio ctMpio on ctMpio.fi_mpio_id = r.fi_mpio_ofi_id
+	WHERE r.fi_tipo_relacionado_sic = 0
+	and r.fi_estatus_registro_id = 3
+
+	
+	----'Duplicados'
+	--SELECT
+	--r.fc_folio_certificado as 'Folio SIC',
+	--CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 105) as 'Fecha Nacimiento SIC',
+	--CONVERT(VARCHAR(10), r.fd_rn_fecha_registro, 105) as 'Fecha Registro SIC',
+	--r.fi_edo_id as 'Estado ID Nacimiento',
+	--loc.fc_loc_edo_desc as 'Estado Nacimiento',
+	--r.fi_mpio_id as 'Municipio ID Nacimiento',
+	--loc.fc_loc_mpio_desc as 'Municipio Nacimiento',
+	--r.fi_mpio_ofi_id as 'Municipio ID Oficialia',
+	--ctMpio.fc_mpio_desc as 'Municipio Oficialia',
+	--r.fi_oficialia_id as 'Oficialia ID'
+	--FROM @vtRegistros r 
+	--OUTER APPLY
+ --   (
+ --       SELECT TOP 1 *
+ --       FROM SDB.CTLocalidad ctloc 
+ --       WHERE ctloc.fi_loc_edo_id = r.fi_edo_id and ctloc.fi_loc_mpio_id = r.fi_mpio_id
+ --   ) loc
+	--left JOIN SDB.CTMunicipio ctMpio on ctMpio.fi_mpio_id = r.fi_mpio_ofi_id 
+	--WHERE r.fi_estatus_registro_id = @CONST_DUPLICADO_ID
+
+	----SinSINAC
+	--SELECT
+	--r.fc_folio_certificado as 'Folio SIC',
+	--CONVERT(VARCHAR(10), r.fd_rn_fecha_hora_nacimiento, 105) as 'Fecha Nacimiento SIC',
+	--CONVERT(VARCHAR(10), r.fd_rn_fecha_registro, 105) as 'Fecha Registro SIC',
+	--r.fi_edo_id as 'Estado ID Nacimiento',
+	--loc.fc_loc_edo_desc as 'Estado Nacimiento',
+	--r.fi_mpio_id as 'Municipio ID Nacimiento',
+	--loc.fc_loc_mpio_desc as 'Municipio Nacimiento',
+	--r.fi_mpio_ofi_id as 'Municipio ID Oficialia',
+	--ctMpio.fc_mpio_desc as 'Municipio Oficialia',
+	--r.fi_oficialia_id as 'Oficialia ID'
+	--FROM @vtRegistros r 
+	--OUTER APPLY
+ --   (
+ --       SELECT TOP 1 *
+ --       FROM SDB.CTLocalidad ctloc 
+ --       WHERE ctloc.fi_loc_edo_id = r.fi_edo_id and ctloc.fi_loc_mpio_id = r.fi_mpio_id
+ --   ) loc
+	--left JOIN SDB.CTMunicipio ctMpio on ctMpio.fi_mpio_id = r.fi_mpio_ofi_id
+	--WHERE r.fi_estatus_registro_id = @CONST_NOREGISTRADO_SINAC_ID
+	
 	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
 
 END TRY
@@ -623,15 +1277,15 @@ AS
 
 BEGIN TRY		
 
-	SELECT  fi_ma_dom_mpio_id as 'IDA0Municipio',Municipio,ISNULL([1],0) as 'TotalA0Subregistro',ISNULL([2],0) as 'TotalA0RegistroA0Oportuno',ISNULL([3],0)  as 'TotalA0RegistroA0Extemporaneo'
+	SELECT  fi_ma_dom_mpio_id as 'IDA0Municipio',Municipio,ISNULL([1],0) as 'TotalA0Subregistro',ISNULL([2],0) as 'TotalA0RegistroA0Oportuno',ISNULL([3],0)  as 'TotalA0RegistroA0Extemporaneo',ISNULL([4],0)  as 'TotalA0RegistroA0Duplicado'
 	FROM    (	
 	SELECT vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc AS Municipio, vt.fi_estatus_registro_id as IdGrupo,count(vt.fi_estatus_registro_id) as Total
 	FROM SDB.FNObtieneTablaSubregistro(@pc_anos,@pc_meses,@pc_municipios) vt 
 	INNER JOIN SDB.CTMunicipio ctM ON vt.fi_ma_dom_mpio_id = ctM.fi_mpio_id	
 	GROUP BY vt.fi_ma_dom_mpio_id,ctM.fc_mpio_desc,vt.fi_estatus_registro_id
 	)s
-	PIVOT   (SUM(Total) FOR IdGrupo IN ([1] ,[2], [3])) pvt	
-	FOR XML PATH('Fila'), ROOT('Reporte')
+	PIVOT   (SUM(Total) FOR IdGrupo IN ([1] ,[2], [3], [4])) pvt	
+	FOR XML PATH('Fila'), ROOT('Reporte')	
 
 	SELECT @po_msg_code=0, @po_msg = 'La ejecución del procedimiento fue exitosa'	
 

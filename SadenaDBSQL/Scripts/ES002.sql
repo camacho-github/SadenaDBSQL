@@ -87,7 +87,8 @@ BEGIN
 	fd_rn_fecha_hora_nacimiento datetime,
 	fi_rn_sexo_id int,
 	fi_rn_edo_id int,
-	fi_rn_mpio_id int
+	fi_rn_mpio_id int,
+	fi_estatus_duplicado int
 	); 
 END
 GO 
@@ -113,6 +114,21 @@ BEGIN
 	CREATE NONCLUSTERED INDEX IN003TASINAC ON SDB.TASINAC (fi_rn_mpio_id DESC); 
 END
 GO
+
+
+----------------------------------------------------------------------------------------------------------------------------------      
+--- Responsable: Jorge Alberto de la Rosa  
+--- Fecha      : Diciembre 2018  
+--- Descripcion: Creación de un constraint default para la tabla TASINAC  
+--- Aplicacion:  SADENADB  
+----------------------------------------------------------------------------------------------------------------------------------  
+IF NOT EXISTS (SELECT name FROM SYSOBJECTS  WITH(NOLOCK)  WHERE Id = Object_Id('SDB.DEF001TASINAC'))
+BEGIN
+	ALTER TABLE SDB.TASINAC
+	ADD CONSTRAINT DEF001TASINAC 
+	DEFAULT (0) FOR fi_estatus_duplicado;  	
+END
+
 
 IF EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TMSIC') AND SysStat & 0xf = 3)
 BEGIN
@@ -144,6 +160,8 @@ BEGIN
 END
 GO 
 
+
+
 IF EXISTS (SELECT ID FROM SysObjects WITH ( NOLOCK ) WHERE ID = OBJECT_ID('SDB.TASIC') AND SysStat & 0xf = 3)
 BEGIN
 	DROP TABLE SDB.TASIC
@@ -167,6 +185,7 @@ BEGIN
 	fi_mpio_id int,
 	fi_mpio_ofi_id int,
 	fi_oficialia_id int,
+	fc_ano varchar(4),
 	fd_rn_fecha_hora_nacimiento datetime,
 	fd_rn_fecha_registro datetime,
 	fi_estatus_duplicado int
