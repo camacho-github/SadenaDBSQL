@@ -666,15 +666,17 @@ BEGIN TRY
 		UPDATE SDB.TMSINAC SET fd_hora_nac = '00:00' WHERE fd_hora_nac = '99:99'
 		
 		INSERT INTO SDB.TASINAC(fc_folio_certificado, fc_folio_simple_certificado,fi_control_id, 
+		fc_ma_nombre,fc_ma_ap_paterno,fc_ma_ap_materno,
 		fi_ma_edad,fi_ma_edo_civil_id,
 		fc_ma_dom_calle,fc_ma_dom_numext,fc_ma_dom_numint,
-		fi_ma_dom_edo_id,fi_ma_dom_mpio_id,fi_ma_dom_loc_id,
+		fi_ma_dom_edo_id,fi_ma_dom_mpio_id,fi_ma_dom_loc_id,fc_ma_dom_col,
 		fi_ma_num_nacimiento,fi_ma_escol_id,fc_ma_ocupacion,
 		fd_rn_fecha_hora_nacimiento,fi_rn_sexo_id,fi_rn_edo_id,fi_rn_mpio_id)
-		SELECT fc_folio, SDB.FNConvierteNumero(fc_folio),@vi_control_id, 
+		SELECT fc_folio, SDB.FNConvierteNumero(fc_folio),@vi_control_id,
+		fc_nombre,fc_paterno,fc_materno,
 		fi_edad_m, fi_edocivil,
 		fc_calle_res,fc_numext_res,fc_numint_res,
-		fi_ent_res,fi_mpo_res,fi_loc_res,
+		fi_ent_res,fi_mpo_res,fi_loc_res,fc_nomasen_res,
 		fi_num_nacvivo,fi_niv_escol,fc_ocup_hab,
 		convert(datetime,SUBSTRING(fd_fech_nac,0,11) + ' ' + ltrim(rtrim(fd_hora_nac)),103),fi_sexo,fi_ent_nacm,fi_mpo_nacm
 		FROM SDB.TMSINAC
