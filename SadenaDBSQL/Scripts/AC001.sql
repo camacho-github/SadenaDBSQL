@@ -140,7 +140,7 @@ BEGIN TRY
 		INSERT INTO SDB.TAUsuario(fi_usuario_id,fc_usuario,fc_correo_e,fi_rol_id,fi_estatus_id,fc_contrasena) VALUES(1,'Superadministrador','superadministrador@sadena.gob.mx',1,1,'5up3radm1n')		
 		INSERT INTO SDB.TAUsuario(fi_usuario_id,fc_usuario,fc_correo_e,fi_rol_id,fi_estatus_id,fc_contrasena) VALUES(2,'Administrador','administrador@sadena.gob.mx',2,1,'Administrador123')
 		INSERT INTO SDB.TAUsuario(fi_usuario_id,fc_usuario,fc_correo_e,fi_rol_id,fi_estatus_id,fc_contrasena) VALUES(3,'Operador','operador@sadena.gob.mx',3,1,'Operador123')
-		INSERT INTO SDB.TAUsuario(fi_usuario_id,fc_usuario,fc_correo_e,fi_rol_id,fi_estatus_id,fc_contrasena) VALUES(3,'Nataly','nataly@hotmail.com',3,1,'Naty123')
+		INSERT INTO SDB.TAUsuario(fi_usuario_id,fc_usuario,fc_correo_e,fi_rol_id,fi_estatus_id,fc_contrasena) VALUES(4,'Nataly','nataly@hotmail.com',3,1,'Naty123')
 	END
 
 	
